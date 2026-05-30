@@ -18,6 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record ServerboundMovementResultPayload(
@@ -30,6 +31,8 @@ public record ServerboundMovementResultPayload(
     private static final double MAX_POSITION_DRIFT = 8.0;
     /** Max distance for an entity to count as a valid hit, measured from the claimed collision position. */
     private static final double MAX_HIT_DISTANCE = 16.0;
+    /** Extra reach used to pull in nearby entities around the collision point when at least one hit was reported. */
+    private static final double IMPACT_SPLASH_RADIUS = 2.75;
 
     public static final Type<ServerboundMovementResultPayload> TYPE = new Type<>(Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "movement_result"));
 
@@ -65,6 +68,24 @@ public record ServerboundMovementResultPayload(
                 if (living.position().distanceTo(claimed) > MAX_HIT_DISTANCE) continue;
                 if (validTargets.contains(living)) continue;
                 validTargets.add(living);
+            }
+
+            if (!validTargets.isEmpty()) {
+                AABB splashBox = new AABB(
+                        claimed.x - IMPACT_SPLASH_RADIUS,
+                        claimed.y - 0.75,
+                        claimed.z - IMPACT_SPLASH_RADIUS,
+                        claimed.x + IMPACT_SPLASH_RADIUS,
+                        claimed.y + 0.75,
+                        claimed.z + IMPACT_SPLASH_RADIUS);
+                for (LivingEntity nearby : player.level().getEntitiesOfClass(LivingEntity.class,
+                        splashBox,
+                        e -> e != player && e.isAlive() && (e.isPickable() || e instanceof ServerPlayer) && !e.isSpectator())) {
+                    if (nearby.level() != player.level()) continue;
+                    if (nearby.position().distanceTo(claimed) > MAX_HIT_DISTANCE) continue;
+                    if (validTargets.contains(nearby)) continue;
+                    validTargets.add(nearby);
+                }
             }
 
             awaiting.handleResult(player, validTargets, payload.wallHit());

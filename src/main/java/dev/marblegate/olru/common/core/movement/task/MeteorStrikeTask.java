@@ -91,11 +91,12 @@ public class MeteorStrikeTask implements MovementTask {
 
         player.teleportTo(player.getX(), hoverYForFall(player), player.getZ());
         Vec3 velocity = new Vec3(0, -fallSpeed, 0);
+        int timeoutTicks = (int) Math.ceil(maxFallDistance / Math.max(0.05, fallSpeed)) + 40;
         PacketDistributor.sendToPlayer(player, new ClientboundStartMovementPayload(
                 taskId, MovementTaskType.METEOR_FALL, velocity, maxFallDistance, 0f, false));
 
         MovementManager.switchTo(player, new AwaitingClientResultTask(
-                taskId, player.position(), maxFallDistance,
+                taskId, player.position(), maxFallDistance, timeoutTicks,
                 null,
                 p -> {
                     p.setNoGravity(false);

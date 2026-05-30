@@ -14,7 +14,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 public class AwaitingClientResultTask implements MovementTask {
-    private static final int TIMEOUT_TICKS = 120; // 6 seconds max
+    private static final int TIMEOUT_TICKS = 240; // 12 seconds max
 
     private final Vec3 startPosition;
     private final UUID taskId;
@@ -23,15 +23,21 @@ public class AwaitingClientResultTask implements MovementTask {
     private final BiConsumer<ServerPlayer, List<LivingEntity>> onEntityHit;
     @Nullable
     private final Consumer<ServerPlayer> onWallHit;
-    private int ticksRemaining = TIMEOUT_TICKS;
+    private int ticksRemaining;
 
     public AwaitingClientResultTask(UUID taskId, Vec3 startPosition, double maxDistance,
+            BiConsumer<ServerPlayer, @Nullable List<LivingEntity>> onEntityHit, @Nullable Consumer<ServerPlayer> onWallHit) {
+        this(taskId, startPosition, maxDistance, TIMEOUT_TICKS, onEntityHit, onWallHit);
+    }
+
+    public AwaitingClientResultTask(UUID taskId, Vec3 startPosition, double maxDistance, int timeoutTicks,
             BiConsumer<ServerPlayer, @Nullable List<LivingEntity>> onEntityHit, @Nullable Consumer<ServerPlayer> onWallHit) {
         this.taskId = taskId;
         this.startPosition = startPosition;
         this.maxDistance = maxDistance;
         this.onEntityHit = onEntityHit;
         this.onWallHit = onWallHit;
+        this.ticksRemaining = Math.max(1, timeoutTicks);
     }
 
     @Override

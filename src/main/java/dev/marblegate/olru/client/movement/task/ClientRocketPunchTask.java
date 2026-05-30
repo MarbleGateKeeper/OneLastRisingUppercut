@@ -8,6 +8,7 @@ import java.util.UUID;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
@@ -19,6 +20,8 @@ public class ClientRocketPunchTask implements ClientMovementTask {
     private static final double JUMP_OUT_HORIZONTAL_DECAY = 0.88;
     private static final double JUMP_OUT_GRAVITY = 0.08;
     private static final double JUMP_OUT_VERTICAL_DECAY = 0.98;
+    private static final double IMPACT_EXPAND_HORIZONTAL = 0.9;
+    private static final double IMPACT_EXPAND_VERTICAL = 0.6;
 
     private final UUID taskId;
     private final Vec3 velocity;
@@ -45,11 +48,14 @@ public class ClientRocketPunchTask implements ClientMovementTask {
 
         if (sweep.hasCollision()) {
             Vec3 snap = sweep.snapOffset();
+            Vec3 impactOffset = sweep.collisionOffset();
             Vec3 pos = player.position();
             player.setPosRaw(pos.x + snap.x, pos.y + snap.y, pos.z + snap.z);
             player.setDeltaMovement(Vec3.ZERO);
 
-            List<UUID> hitIds = sweep.entityHits().stream().map(e -> e.getUUID()).toList();
+            List<UUID> hitIds = sweep.entityHits().isEmpty()
+                    ? List.of()
+                    : collectImpactHits(player, level, sweep, impactOffset);
             sendResult(player, hitIds, sweep.blockHit());
             return true;
         }
@@ -83,6 +89,22 @@ public class ClientRocketPunchTask implements ClientMovementTask {
     private void sendResult(LocalPlayer player, List<UUID> hitIds, boolean wallHit) {
         ClientPacketDistributor.sendToServer(new ServerboundMovementResultPayload(
                 taskId, player.position(), hitIds, wallHit));
+    }
+
+    private List<UUID> collectImpactHits(LocalPlayer player, ClientLevel level, SweepResult sweep, Vec3 impactOffset) {
+        AABB impactBox = player.getBoundingBox()
+                .move(impactOffset)
+                .inflate(IMPACT_EXPAND_HORIZONTAL, IMPACT_EXPAND_VERTICAL, IMPACT_EXPAND_HORIZONTAL);
+        List<UUID> hitIds = new java.util.ArrayList<>();
+        for (var entity : level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, impactBox,
+                e -> e != player && e.isAlive() && (e.isPickable() || e instanceof Player) && !e.isSpectator())) {
+            UUID id = entity.getUUID();
+            if (!hitIds.contains(id)) hitIds.add(id);
+        }
+        for (UUID id : sweep.entityHits().stream().map(e -> e.getUUID()).toList()) {
+            if (!hitIds.contains(id)) hitIds.add(id);
+        }
+        return hitIds;
     }
 
     private void startJumpOut(LocalPlayer player) {

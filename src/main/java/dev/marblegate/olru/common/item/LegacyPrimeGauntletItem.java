@@ -139,9 +139,10 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
         ServerLevel level = player.level();
         UUID playerUUID = player.getUUID();
         double startY = level.getMaxY() - cfg.teleportHeightOffset.get();
+        double maxFallDistance = meteorFallDistanceToVoid(level, startY);
         MovementTaskAssignmentResult result = MovementManager.assign(player,
                 new MeteorStrikeTask(
-                        cfg.hoverTicks.get(), cfg.fallSpeed.get(), startY,
+                        cfg.hoverTicks.get(), cfg.fallSpeed.get(), maxFallDistance,
                         (float) cfg.innerRadius.getAsDouble(), (float) cfg.outerRadius.getAsDouble(), () -> {
                             ServerPlayer p = level.getServer().getPlayerList().getPlayer(playerUUID);
                             if (p != null) triggerMeteorLanding(p, cfg);
@@ -151,6 +152,10 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
 
         player.teleportTo(player.getX(), startY, player.getZ());
         consumeSkill(player, SkillType.ULTIMATE);
+    }
+
+    private static double meteorFallDistanceToVoid(ServerLevel level, double startY) {
+        return Math.max(0.0, startY - (level.getMinY() - 128.0));
     }
 
     private static void triggerMeteorLanding(ServerPlayer player, MeteorStrikeConfig cfg) {
