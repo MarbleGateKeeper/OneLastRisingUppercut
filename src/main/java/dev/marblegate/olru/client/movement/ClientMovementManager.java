@@ -39,6 +39,10 @@ public class ClientMovementManager {
         return activeTask != null;
     }
 
+    public static boolean isActiveTask(Class<? extends ClientMovementTask> taskClass) {
+        return activeTask != null && taskClass.isInstance(activeTask);
+    }
+
     public static boolean submitRuntimeData(ClientMovementRuntimeData data) {
         if (activeTask == null) return false;
 

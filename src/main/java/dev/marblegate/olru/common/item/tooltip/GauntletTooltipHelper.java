@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 public class GauntletTooltipHelper {
     private static final ChatFormatting PRIME_ACCENT = ChatFormatting.GOLD;
@@ -13,6 +14,7 @@ public class GauntletTooltipHelper {
     private static final ChatFormatting LABEL = ChatFormatting.DARK_AQUA;
     private static final ChatFormatting BODY = ChatFormatting.GRAY;
     private static final ChatFormatting MUTED = ChatFormatting.DARK_GRAY;
+    private static final ChatFormatting KEY = ChatFormatting.YELLOW;
 
     public static void appendLegacyPrime(Consumer<Component> tooltip, boolean expanded) {
         var handCannon = OLRUConfig.LEGACY_PRIME.HAND_CANNON;
@@ -23,6 +25,7 @@ public class GauntletTooltipHelper {
         appendHeader(tooltip, "tooltip.olru.legacy_prime.style", expanded);
         if (!expanded) return;
         appendSkill(tooltip,
+                "LMB",
                 "skill.olru.legacy_prime.normal_attack",
                 PRIME_ACCENT,
                 Component.translatable("tooltip.olru.legacy_prime.normal_attack.mechanic"),
@@ -32,6 +35,7 @@ public class GauntletTooltipHelper {
                         handCannon.maxCharges.get(), seconds(handCannon.cooldownTicks.get()),
                         blocks(handCannon.range.get()), number(handCannon.damage.get())));
         appendSkill(tooltip,
+                "RMB",
                 "skill.olru.legacy_prime.skill_one",
                 PRIME_ACCENT,
                 Component.translatable("tooltip.olru.legacy_prime.skill_one.mechanic"),
@@ -44,6 +48,7 @@ public class GauntletTooltipHelper {
                         number(rocketPunch.mobDamageMin.get()), number(rocketPunch.mobDamageMax.get()),
                         number(rocketPunch.wallBonusDamage.get())));
         appendSkill(tooltip,
+                "Sft",
                 "skill.olru.legacy_prime.skill_two",
                 PRIME_ACCENT,
                 Component.translatable("tooltip.olru.legacy_prime.skill_two.mechanic"),
@@ -55,6 +60,7 @@ public class GauntletTooltipHelper {
                         number(risingUppercut.mobDamage.get()), blocks(risingUppercut.frontConeRange.get()),
                         number(risingUppercut.frontConeAngleDegrees.get())));
         appendSkill(tooltip,
+                "X",
                 "skill.olru.legacy_prime.ultimate",
                 PRIME_ACCENT,
                 Component.translatable("tooltip.olru.legacy_prime.ultimate.mechanic"),
@@ -77,6 +83,7 @@ public class GauntletTooltipHelper {
         appendHeader(tooltip, "tooltip.olru.legacy_of_horus.style", expanded);
         if (!expanded) return;
         appendSkill(tooltip,
+                "LMB",
                 "skill.olru.legacy_of_horus.normal_attack",
                 HORUS_ACCENT,
                 Component.translatable("tooltip.olru.legacy_of_horus.normal_attack.mechanic"),
@@ -87,6 +94,7 @@ public class GauntletTooltipHelper {
                         blocks(bioticRound.effectiveRange.get()), number(bioticRound.healAmount.get()),
                         number(bioticRound.damage.get())));
         appendSkill(tooltip,
+                "RMB",
                 "skill.olru.legacy_of_horus.skill_one",
                 HORUS_ACCENT,
                 Component.translatable("tooltip.olru.legacy_of_horus.skill_one.mechanic"),
@@ -99,6 +107,7 @@ public class GauntletTooltipHelper {
                         number(fieldExtraction.pullSpeed.get()), blocks(fieldExtraction.selfDashDistance.get()),
                         number(fieldExtraction.healAmount.get()), seconds(fieldExtraction.protectionTicks.get())));
         appendSkill(tooltip,
+                "Sft",
                 "skill.olru.legacy_of_horus.skill_two",
                 HORUS_ACCENT,
                 Component.translatable("tooltip.olru.legacy_of_horus.skill_two.mechanic"),
@@ -110,6 +119,7 @@ public class GauntletTooltipHelper {
                         seconds(sedativeDart.sleepTicks.get()), seconds(sedativeDart.bossSleepTicks.get()),
                         number(sedativeDart.flyingDropSpeed.get())));
         appendSkill(tooltip,
+                "X",
                 "skill.olru.legacy_of_horus.ultimate",
                 HORUS_ACCENT,
                 Component.translatable("tooltip.olru.legacy_of_horus.ultimate.mechanic"),
@@ -124,35 +134,45 @@ public class GauntletTooltipHelper {
 
     private static void appendHeader(Consumer<Component> tooltip, String styleKey, boolean expanded) {
         tooltip.accept(CommonComponents.EMPTY);
-        tooltip.accept(labeled("tooltip.olru.gauntlet.style", Component.translatable(styleKey)));
+        tooltip.accept(Component.literal("  ")
+                .append(Component.translatable("tooltip.olru.gauntlet.style").withStyle(LABEL, ChatFormatting.BOLD))
+                .append(Component.literal(": ").withStyle(MUTED))
+                .append(Component.translatable(styleKey).withStyle(BODY)));
         if (!expanded) {
-            tooltip.accept(Component.literal("  ")
+            tooltip.accept(Component.literal("  [Shift] ").withStyle(KEY)
                     .append(Component.translatable("tooltip.olru.gauntlet.hold_shift")
-                            .withStyle(ChatFormatting.YELLOW)));
+                            .withStyle(BODY)));
         }
-        tooltip.accept(CommonComponents.EMPTY);
-    }
-
-    private static void appendSkillNames(Consumer<Component> tooltip, ChatFormatting accent, String... skillNameKeys) {
-        for (String skillNameKey : skillNameKeys) {
-            tooltip.accept(Component.literal(" ")
-                    .append(Component.translatable(skillNameKey))
-                    .withStyle(accent));
+        if (expanded) {
+            tooltip.accept(Component.literal("  ----------------").withStyle(MUTED));
         }
     }
 
-    private static void appendSkill(Consumer<Component> tooltip, String skillNameKey, ChatFormatting accent,
+    private static void appendSkill(Consumer<Component> tooltip, String keyLabel, String skillNameKey, ChatFormatting accent,
             Component summary, Component chargeType, Component duration, Component keyStats) {
-        tooltip.accept(Component.literal(" ").append(Component.translatable(skillNameKey))
-                .withStyle(accent, ChatFormatting.BOLD));
-        tooltip.accept(Component.literal("  ").append(summary).withStyle(BODY));
-        tooltip.accept(labeled("tooltip.olru.gauntlet.charge_type", chargeType));
-        if (duration != null) tooltip.accept(labeled("tooltip.olru.gauntlet.duration", duration));
+        tooltip.accept(Component.literal("  [").withStyle(MUTED)
+                .append(Component.literal(keyLabel).withStyle(KEY, ChatFormatting.BOLD))
+                .append(Component.literal("] ").withStyle(MUTED))
+                .append(Component.translatable(skillNameKey).withStyle(accent, ChatFormatting.BOLD)));
+        tooltip.accept(Component.literal("   ").append(summary).withStyle(BODY));
+        MutableComponent timing = labeledInline("tooltip.olru.gauntlet.charge_type", chargeType);
+        if (duration != null) {
+            timing.append(Component.literal("  |  ").withStyle(MUTED))
+                    .append(labeledInline("tooltip.olru.gauntlet.duration", duration));
+        }
+        tooltip.accept(timing);
         tooltip.accept(labeled("tooltip.olru.gauntlet.key_stats", keyStats));
     }
 
     private static Component labeled(String labelKey, Component value) {
-        return Component.literal("  ")
+        return Component.literal("   ")
+                .append(Component.translatable(labelKey).withStyle(LABEL, ChatFormatting.BOLD))
+                .append(Component.literal(": ").withStyle(MUTED))
+                .append(value.copy().withStyle(BODY));
+    }
+
+    private static MutableComponent labeledInline(String labelKey, Component value) {
+        return Component.literal("   ")
                 .append(Component.translatable(labelKey).withStyle(LABEL))
                 .append(Component.literal(": ").withStyle(MUTED))
                 .append(value.copy().withStyle(BODY));

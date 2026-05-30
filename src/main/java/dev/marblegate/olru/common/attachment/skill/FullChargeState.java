@@ -64,7 +64,7 @@ public class FullChargeState implements SkillState {
                 : 0f;
         return new SkillDisplayData(
                 SkillStateType.FULL_CHARGE, fraction,
-                currentCharges, max, isUsable());
+                currentCharges, max, isUsable(), cdRemaining, total);
     }
 
     @Override

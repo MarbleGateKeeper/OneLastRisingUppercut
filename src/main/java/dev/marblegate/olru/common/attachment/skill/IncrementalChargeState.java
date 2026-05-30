@@ -60,7 +60,7 @@ public class IncrementalChargeState implements SkillState {
                 : 0f;
         return new SkillDisplayData(
                 SkillStateType.INCREMENTAL_CHARGE, fraction,
-                currentCharges, max, isUsable());
+                currentCharges, max, isUsable(), cdRemaining, total);
     }
 
     @Override

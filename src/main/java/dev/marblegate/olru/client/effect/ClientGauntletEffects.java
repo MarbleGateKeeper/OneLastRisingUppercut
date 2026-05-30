@@ -134,6 +134,10 @@ public class ClientGauntletEffects {
         return mc.player != null && SEDATED.containsKey(mc.player.getId());
     }
 
+    public static boolean isNanoSurgeActive(int entityId) {
+        return NANO_SURGE.containsKey(entityId);
+    }
+
     public static NanoSurgeRenderData nanoSurgeRenderData(int entityId) {
         Timed effect = NANO_SURGE.get(entityId);
         if (effect == null) return null;

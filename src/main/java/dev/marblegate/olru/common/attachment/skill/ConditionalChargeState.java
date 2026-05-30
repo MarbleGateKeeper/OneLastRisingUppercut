@@ -43,7 +43,7 @@ public class ConditionalChargeState implements SkillState {
         return new SkillDisplayData(
                 SkillStateType.CONDITIONAL,
                 1f - progress,
-                0, 0, isUsable());
+                0, 0, isUsable(), 0, 0);
     }
 
     @Override

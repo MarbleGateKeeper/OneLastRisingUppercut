@@ -41,7 +41,7 @@ public class CooldownSkillState implements SkillState {
         return new SkillDisplayData(
                 SkillStateType.COOLDOWN,
                 total > 0 ? (float) cdRemaining / total : 0f,
-                0, 0, isUsable());
+                0, 0, isUsable(), cdRemaining, total);
     }
 
     @Override
