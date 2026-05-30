@@ -20,6 +20,8 @@
   "tooltip.olru.gauntlet.hold_shift": "查看技能详情",
   "tooltip.olru.legacy_prime.style": "进攻位移、爆发伤害与空中终结",
   "tooltip.olru.legacy_of_horus.style": "治疗、救援、控制与团队增幅",
+  "key.categories.olru.category": "OLRU",
+  "key.olru.skill_two": "拳套：技能二",
 
   "tooltip.olru.legacy_prime.normal_attack.charge": "弹药充能池",
   "tooltip.olru.legacy_prime.normal_attack.stats": "%s 发 | 回充 %s | 射程 %s 格 | 伤害 %s",

@@ -24,34 +24,30 @@ import org.lwjgl.glfw.GLFW;
 @EventBusSubscriber(modid = OneLastRisingUppercut.MODID, value = Dist.CLIENT)
 public class ClientInputHandler {
     public static final KeyMapping.Category CATEGORY = new KeyMapping.Category(Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "category"));
+    public static final KeyMapping SKILL_TWO_KEY = new KeyMapping("key.olru.skill_two", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_SHIFT, CATEGORY);
     public static final KeyMapping ULTIMATE_KEY = new KeyMapping("key.olru.ultimate", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_X, CATEGORY);
 
-    private static boolean wasShiftDown = false;
     private static boolean wasJumpDownForMovement = false;
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
 
-        boolean shiftClick = mc.options.keyShift.consumeClick();
-        boolean ultimateClick = ULTIMATE_KEY.consumeClick();
-
         if (mc.player == null || mc.level == null || mc.screen != null) {
-            wasShiftDown = false;
+            drainGauntletSkillClicks();
             return;
         }
 
         if (!(mc.player.getMainHandItem().getItem() instanceof AbstractGauntletItem)) {
-            wasShiftDown = false;
+            drainGauntletSkillClicks();
             return;
         }
 
-        if (shiftClick && !wasShiftDown) {
+        if (consumeAnyClick(SKILL_TWO_KEY)) {
             ClientPacketDistributor.sendToServer(ServerboundGauntletSkillPayload.skillTwo());
         }
-        wasShiftDown = shiftClick;
 
-        if (ultimateClick) {
+        if (consumeAnyClick(ULTIMATE_KEY)) {
             ClientPacketDistributor.sendToServer(ServerboundGauntletSkillPayload.ultimate());
         }
     }
@@ -90,6 +86,20 @@ public class ClientInputHandler {
     @SubscribeEvent
     public static void registerBindings(RegisterKeyMappingsEvent event) {
         event.registerCategory(CATEGORY);
+        event.register(SKILL_TWO_KEY);
         event.register(ULTIMATE_KEY);
+    }
+
+    private static void drainGauntletSkillClicks() {
+        consumeAnyClick(SKILL_TWO_KEY);
+        consumeAnyClick(ULTIMATE_KEY);
+    }
+
+    private static boolean consumeAnyClick(KeyMapping mapping) {
+        boolean consumed = false;
+        while (mapping.consumeClick()) {
+            consumed = true;
+        }
+        return consumed;
     }
 }

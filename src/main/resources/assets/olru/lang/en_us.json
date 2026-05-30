@@ -20,6 +20,8 @@
   "tooltip.olru.gauntlet.hold_shift": "Show skill details",
   "tooltip.olru.legacy_prime.style": "Aggressive mobility, burst damage, and aerial finishers",
   "tooltip.olru.legacy_of_horus.style": "Support control through healing, extraction, sedation, and team buffs",
+  "key.categories.olru.category": "OLRU",
+  "key.olru.skill_two": "Gauntlet: Skill 2",
 
   "tooltip.olru.legacy_prime.normal_attack.charge": "Charge pool",
   "tooltip.olru.legacy_prime.normal_attack.stats": "%s shots | refill %s | range %s blocks | damage %s",

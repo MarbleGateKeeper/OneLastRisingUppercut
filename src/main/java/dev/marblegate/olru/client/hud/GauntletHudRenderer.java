@@ -6,6 +6,7 @@ import dev.marblegate.olru.client.movement.task.ClientMeteorFallTask;
 import dev.marblegate.olru.client.movement.task.ClientMeteorHoverTask;
 import dev.marblegate.olru.client.movement.task.ClientRocketPunchTask;
 import dev.marblegate.olru.client.effect.ClientGauntletEffects;
+import dev.marblegate.olru.client.ClientInputHandler;
 import dev.marblegate.olru.common.attachment.GauntletSkillGroup;
 import dev.marblegate.olru.common.attachment.skill.SkillDisplayData;
 import dev.marblegate.olru.common.attachment.skill.SkillStateType;
@@ -13,10 +14,12 @@ import dev.marblegate.olru.common.item.AbstractGauntletItem;
 import dev.marblegate.olru.common.item.LegacyOfHorusGauntletItem;
 import dev.marblegate.olru.common.item.LegacyPrimeGauntletItem;
 import dev.marblegate.olru.network.payload.ServerboundGauntletSkillPayload.SkillType;
+import java.util.Locale;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.KeyMapping;
 import net.neoforged.neoforge.client.gui.GuiLayer;
 
 public class GauntletHudRenderer implements GuiLayer {
@@ -32,7 +35,7 @@ public class GauntletHudRenderer implements GuiLayer {
     private static final int KEY_BADGE_GAP = 2;
     private static final int CHARGE_TAIL_GAP = 3;
     private static final int TOTAL_WIDTH = NORMAL_SLOT * 3 + ULTIMATE_SLOT + SLOT_GAP * 3;
-    private static final int HUD_BOTTOM_OFFSET = 70;
+    private static final int HUD_BOTTOM_OFFSET = 90;
 
     private static final int COLOR_TEXT = 0xFFEFEFEF;
     private static final int COLOR_TEXT_DIM = 0xFFB6B6B6;
@@ -81,7 +84,7 @@ public class GauntletHudRenderer implements GuiLayer {
             int size = slotSize(type);
             boolean slotCharging = charging && type == SkillType.SKILL_ONE;
             renderSlot(guiGraphics, mc.font, x, startY + (ULTIMATE_SLOT - size), size,
-                    SKILL_LABELS[i], group.get(type).displayData(), theme, iconFor(gauntlet, type),
+                    skillLabel(type, i), group.get(type).displayData(), theme, iconFor(gauntlet, type),
                     slotCharging, charge, isSkillActive(gauntlet, type));
             x += size + SLOT_GAP;
         }
@@ -95,12 +98,14 @@ public class GauntletHudRenderer implements GuiLayer {
 
     private void renderSyncPending(GuiGraphicsExtractor guiGraphics, int startX, int startY, Theme theme) {
         int x = startX;
-        for (SkillType type : SKILL_ORDER) {
+        for (int i = 0; i < SKILL_ORDER.length; i++) {
+            SkillType type = SKILL_ORDER[i];
             int size = slotSize(type);
             int y = startY + (ULTIMATE_SLOT - size);
             renderSlotFrame(guiGraphics, x, y, size, theme, false, false, false);
             drawPixelQuestion(guiGraphics, x + (size - ICON_SIZE) / 2, y + 5, theme.dimIcon());
-            drawKeyBadgeBelow(guiGraphics, Minecraft.getInstance().font, x, y + size + KEY_BADGE_GAP, size, "...");
+            drawKeyBadgeBelow(guiGraphics, Minecraft.getInstance().font, x, y + size + KEY_BADGE_GAP, size,
+                    skillLabel(type, i));
             x += size + SLOT_GAP;
         }
     }
@@ -336,6 +341,32 @@ public class GauntletHudRenderer implements GuiLayer {
     private boolean mcPlayerHasNanoSurge() {
         var player = Minecraft.getInstance().player;
         return player != null && ClientGauntletEffects.isNanoSurgeActive(player.getId());
+    }
+
+    private String skillLabel(SkillType type, int index) {
+        return switch (type) {
+            case NORMAL_ATTACK -> SKILL_LABELS[index];
+            case SKILL_ONE -> SKILL_LABELS[index];
+            case SKILL_TWO -> compactKeyLabel(ClientInputHandler.SKILL_TWO_KEY, SKILL_LABELS[index]);
+            case ULTIMATE -> compactKeyLabel(ClientInputHandler.ULTIMATE_KEY, SKILL_LABELS[index]);
+        };
+    }
+
+    private String compactKeyLabel(KeyMapping mapping, String fallback) {
+        String raw = mapping.getTranslatedKeyMessage().getString();
+        if (raw == null || raw.isBlank()) return fallback;
+        String lower = raw.toLowerCase(Locale.ROOT);
+        if (lower.contains("shift")) return "Sft";
+        if (lower.contains("ctrl") || lower.contains("control")) return "Ctrl";
+        if (lower.contains("alt")) return "Alt";
+        if (lower.contains("space")) return "Spc";
+        if (lower.contains("mouse")) {
+            if (lower.contains("left")) return "LMB";
+            if (lower.contains("right")) return "RMB";
+            if (lower.contains("middle")) return "MMB";
+        }
+        if (raw.length() <= 4) return raw;
+        return raw.substring(0, 4);
     }
 
     private int slotSize(SkillType type) {
