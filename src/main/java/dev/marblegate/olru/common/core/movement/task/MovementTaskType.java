@@ -7,6 +7,7 @@ import net.minecraft.network.codec.StreamCodec;
 public enum MovementTaskType {
     ROCKET_PUNCH,
     ENTITY_PUSH,
+    SEISMIC_SLAM,
     METEOR_FALL,
     METEOR_HOVER;
 

@@ -98,7 +98,7 @@ public class MeteorStrikeTask implements MovementTask {
         MovementManager.switchTo(player, new AwaitingClientResultTask(
                 taskId, player.position(), maxFallDistance, timeoutTicks,
                 null,
-                p -> {
+                (p, ctx) -> {
                     p.setNoGravity(false);
                     stopMeteorTarget(p);
                     onLand.run();

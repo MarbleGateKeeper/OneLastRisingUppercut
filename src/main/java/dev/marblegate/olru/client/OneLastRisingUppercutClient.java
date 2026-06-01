@@ -9,7 +9,9 @@ import dev.marblegate.olru.client.render.effect.GauntletClientEffectRenderers;
 import dev.marblegate.olru.common.OneLastRisingUppercut;
 import dev.marblegate.olru.common.attachment.GauntletEntityState;
 import dev.marblegate.olru.common.registry.OLRUAttachments;
+import dev.marblegate.olru.common.registry.OLRUEntityTypes;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -30,6 +32,7 @@ public class OneLastRisingUppercutClient {
     public OneLastRisingUppercutClient(IEventBus modEventBus, ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         modEventBus.addListener(this::registerGuiLayers);
+        modEventBus.addListener(this::registerEntityRenderers);
         modEventBus.addListener(this::addEntityRenderLayers);
         modEventBus.addListener(this::registerRenderStateModifiers);
         NeoForge.EVENT_BUS.addListener(this::onClientTick);
@@ -44,6 +47,10 @@ public class OneLastRisingUppercutClient {
         event.registerAboveAll(
                 Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "sedation_overlay"),
                 new SedationOverlayRenderer());
+    }
+
+    private void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(OLRUEntityTypes.BIOTIC_GRENADE.get(), ThrownItemRenderer::new);
     }
 
     private void addEntityRenderLayers(EntityRenderersEvent.AddLayers event) {

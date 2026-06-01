@@ -15,11 +15,14 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 public record ServerboundGauntletSkillPayload(
         SkillType skill) implements CustomPacketPayload {
     public enum SkillType {
-        SKILL_ONE, SKILL_TWO, ULTIMATE, NORMAL_ATTACK;
+        NORMAL_ATTACK, SKILL_ONE, SKILL_TWO, SKILL_THREE, ULTIMATE;
 
         private static final SkillType[] VALUES = values();
 
         public static SkillType byOrdinal(int i) {
+            if (i < 0 || i >= VALUES.length) {
+                throw new IllegalArgumentException("Unknown gauntlet skill ordinal: " + i);
+            }
             return VALUES[i];
         }
 
@@ -42,6 +45,10 @@ public record ServerboundGauntletSkillPayload(
         return new ServerboundGauntletSkillPayload(SkillType.SKILL_TWO);
     }
 
+    public static ServerboundGauntletSkillPayload skillThree() {
+        return new ServerboundGauntletSkillPayload(SkillType.SKILL_THREE);
+    }
+
     public static ServerboundGauntletSkillPayload ultimate() {
         return new ServerboundGauntletSkillPayload(SkillType.ULTIMATE);
     }
@@ -56,7 +63,10 @@ public record ServerboundGauntletSkillPayload(
         if (!(held.getItem() instanceof AbstractGauntletItem gauntlet)) return;
 
         switch (payload.skill()) {
+            case SKILL_ONE -> {
+            }
             case SKILL_TWO -> gauntlet.performSkillTwo(player);
+            case SKILL_THREE -> gauntlet.performSkillThree(player);
             case ULTIMATE -> gauntlet.performUltimate(player);
             case NORMAL_ATTACK -> gauntlet.performNormalAttack(player);
         }

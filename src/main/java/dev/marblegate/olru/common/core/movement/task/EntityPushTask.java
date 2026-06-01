@@ -75,7 +75,7 @@ public class EntityPushTask implements MovementTask {
         MovementManager.switchTo(player, new AwaitingClientResultTask(
                 taskId, startPos, remainingDistance,
                 null,
-                collisionDamage > 0 ? p -> p.hurt(resolveDamageSource(p.level()), collisionDamage) : null));
+                collisionDamage > 0 ? (p, ctx) -> p.hurt(resolveDamageSource(p.level()), collisionDamage) : null));
         return false;
     }
 

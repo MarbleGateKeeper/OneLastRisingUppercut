@@ -5,7 +5,6 @@ import dev.marblegate.olru.network.payload.ClientboundStopMovementPayload;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,16 +21,16 @@ public class AwaitingClientResultTask implements MovementTask {
     @Nullable
     private final BiConsumer<ServerPlayer, List<LivingEntity>> onEntityHit;
     @Nullable
-    private final Consumer<ServerPlayer> onWallHit;
+    private final MovementResultHandler onWallHit;
     private int ticksRemaining;
 
     public AwaitingClientResultTask(UUID taskId, Vec3 startPosition, double maxDistance,
-            BiConsumer<ServerPlayer, @Nullable List<LivingEntity>> onEntityHit, @Nullable Consumer<ServerPlayer> onWallHit) {
+            BiConsumer<ServerPlayer, @Nullable List<LivingEntity>> onEntityHit, @Nullable MovementResultHandler onWallHit) {
         this(taskId, startPosition, maxDistance, TIMEOUT_TICKS, onEntityHit, onWallHit);
     }
 
     public AwaitingClientResultTask(UUID taskId, Vec3 startPosition, double maxDistance, int timeoutTicks,
-            BiConsumer<ServerPlayer, @Nullable List<LivingEntity>> onEntityHit, @Nullable Consumer<ServerPlayer> onWallHit) {
+            BiConsumer<ServerPlayer, @Nullable List<LivingEntity>> onEntityHit, @Nullable MovementResultHandler onWallHit) {
         this.taskId = taskId;
         this.startPosition = startPosition;
         this.maxDistance = maxDistance;
@@ -72,11 +71,18 @@ public class AwaitingClientResultTask implements MovementTask {
         return maxDistance;
     }
 
-    public void handleResult(ServerPlayer player, List<LivingEntity> validEntities, boolean wallHit) {
+    public void handleResult(ServerPlayer player, List<LivingEntity> validEntities, boolean wallHit, Vec3 claimedPosition, Vec3 facing) {
         if (!validEntities.isEmpty() && onEntityHit != null) {
             onEntityHit.accept(player, validEntities);
         } else if (wallHit && onWallHit != null) {
-            onWallHit.accept(player);
+            onWallHit.accept(player, new MovementResultContext(claimedPosition, facing, wallHit));
         }
+    }
+
+    public record MovementResultContext(Vec3 claimedPosition, Vec3 facing, boolean wallHit) {}
+
+    @FunctionalInterface
+    public interface MovementResultHandler {
+        void accept(ServerPlayer player, MovementResultContext context);
     }
 }

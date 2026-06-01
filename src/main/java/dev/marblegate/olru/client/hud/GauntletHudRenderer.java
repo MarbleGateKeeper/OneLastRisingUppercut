@@ -5,6 +5,7 @@ import dev.marblegate.olru.client.movement.task.ClientEntityPushTask;
 import dev.marblegate.olru.client.movement.task.ClientMeteorFallTask;
 import dev.marblegate.olru.client.movement.task.ClientMeteorHoverTask;
 import dev.marblegate.olru.client.movement.task.ClientRocketPunchTask;
+import dev.marblegate.olru.client.movement.task.ClientSeismicSlamTask;
 import dev.marblegate.olru.client.effect.ClientGauntletEffects;
 import dev.marblegate.olru.client.ClientInputHandler;
 import dev.marblegate.olru.common.attachment.GauntletSkillGroup;
@@ -23,6 +24,8 @@ import net.minecraft.client.KeyMapping;
 import net.neoforged.neoforge.client.gui.GuiLayer;
 
 public class GauntletHudRenderer implements GuiLayer {
+    private static final int PRIMARY_RAIL_WIDTH = 52;
+    private static final int PRIMARY_GAP = 10;
     private static final int NORMAL_SLOT = 26;
     private static final int ULTIMATE_SLOT = 30;
     private static final int SLOT_GAP = 5;
@@ -34,7 +37,7 @@ public class GauntletHudRenderer implements GuiLayer {
     private static final int KEY_BADGE_HEIGHT = 8;
     private static final int KEY_BADGE_GAP = 2;
     private static final int CHARGE_TAIL_GAP = 3;
-    private static final int TOTAL_WIDTH = NORMAL_SLOT * 3 + ULTIMATE_SLOT + SLOT_GAP * 3;
+    private static final int MAIN_WIDTH = NORMAL_SLOT * 3 + ULTIMATE_SLOT + SLOT_GAP * 3;
     private static final int HUD_BOTTOM_OFFSET = 90;
 
     private static final int COLOR_TEXT = 0xFFEFEFEF;
@@ -44,13 +47,12 @@ public class GauntletHudRenderer implements GuiLayer {
     private static final int COLOR_COOLDOWN = 0xB9000000;
     private static final int COLOR_DISABLED = 0x77000000;
 
-    private static final SkillType[] SKILL_ORDER = {
-            SkillType.NORMAL_ATTACK,
+    private static final SkillType[] MAIN_SKILL_ORDER = {
             SkillType.SKILL_ONE,
             SkillType.SKILL_TWO,
+            SkillType.SKILL_THREE,
             SkillType.ULTIMATE
     };
-    private static final String[] SKILL_LABELS = { "LMB", "RMB", "Sft", "X" };
 
     @Override
     public void render(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
@@ -61,7 +63,7 @@ public class GauntletHudRenderer implements GuiLayer {
         Theme theme = themeFor(gauntlet);
         GauntletSkillGroup group = gauntlet.getSyncedSkillGroup(mc.player);
 
-        int startX = (guiGraphics.guiWidth() - TOTAL_WIDTH) / 2;
+        int startX = (guiGraphics.guiWidth() - MAIN_WIDTH) / 2;
         int startY = guiGraphics.guiHeight() - HUD_BOTTOM_OFFSET;
 
         if (group == null) {
@@ -78,36 +80,76 @@ public class GauntletHudRenderer implements GuiLayer {
             charge = Math.min(1f, (float) ticksHeld / gauntlet.getMaxChargeTicks());
         }
 
+        renderPrimaryAmmoRail(guiGraphics, mc.font, primaryX(startX), primaryY(startY),
+                group.get(SkillType.NORMAL_ATTACK).displayData(), theme);
+
         int x = startX;
-        for (int i = 0; i < SKILL_ORDER.length; i++) {
-            SkillType type = SKILL_ORDER[i];
+        for (SkillType type : MAIN_SKILL_ORDER) {
             int size = slotSize(type);
             boolean slotCharging = charging && type == SkillType.SKILL_ONE;
             renderSlot(guiGraphics, mc.font, x, startY + (ULTIMATE_SLOT - size), size,
-                    skillLabel(type, i), group.get(type).displayData(), theme, iconFor(gauntlet, type),
+                    skillLabel(type), group.get(type).displayData(), theme, iconFor(gauntlet, type),
                     slotCharging, charge, isSkillActive(gauntlet, type));
             x += size + SLOT_GAP;
         }
 
         if (charging) {
-            int skillOneX = startX + NORMAL_SLOT + SLOT_GAP;
+            int skillOneX = startX;
             int skillOneY = startY + (ULTIMATE_SLOT - NORMAL_SLOT);
             renderChargeTail(guiGraphics, skillOneX, skillOneY - CHARGE_BAR_H - CHARGE_TAIL_GAP, NORMAL_SLOT, charge, theme);
         }
     }
 
     private void renderSyncPending(GuiGraphicsExtractor guiGraphics, int startX, int startY, Theme theme) {
+        renderPrimaryAmmoRailPlaceholder(guiGraphics, Minecraft.getInstance().font, primaryX(startX), primaryY(startY), theme);
+
         int x = startX;
-        for (int i = 0; i < SKILL_ORDER.length; i++) {
-            SkillType type = SKILL_ORDER[i];
+        for (SkillType type : MAIN_SKILL_ORDER) {
             int size = slotSize(type);
             int y = startY + (ULTIMATE_SLOT - size);
             renderSlotFrame(guiGraphics, x, y, size, theme, false, false, false);
             drawPixelQuestion(guiGraphics, x + (size - ICON_SIZE) / 2, y + 5, theme.dimIcon());
             drawKeyBadgeBelow(guiGraphics, Minecraft.getInstance().font, x, y + size + KEY_BADGE_GAP, size,
-                    skillLabel(type, i));
+                    skillLabel(type));
             x += size + SLOT_GAP;
         }
+    }
+
+    private void renderPrimaryAmmoRail(GuiGraphicsExtractor guiGraphics, Font font, int x, int y, SkillDisplayData data, Theme theme) {
+        guiGraphics.text(font, "LMB", x, y + 1, data.usable() ? 0xFF8F8F8F : 0xFF5F5F5F, false);
+
+        int max = data.maxCharges();
+        if (max > 0) {
+            int pipSize = 3;
+            int gap = 2;
+            int pipW = max * pipSize + (max - 1) * gap;
+            int px = x + PRIMARY_RAIL_WIDTH - pipW;
+            int py = y + 3;
+            for (int i = 0; i < max; i++) {
+                int color = i < data.currentCharges() ? (theme.resource() & 0xCCFFFFFF) : 0xFF2F2F2F;
+                guiGraphics.fill(px, py, px + pipSize, py + pipSize, color);
+                px += pipSize + gap;
+            }
+
+            if (data.cdFraction() > 0f && data.currentCharges() < data.maxCharges()) {
+                int barX = x + PRIMARY_RAIL_WIDTH - pipW;
+                int fillW = (int) (pipW * (1f - data.cdFraction()));
+                guiGraphics.fill(barX, y + 8, barX + pipW, y + 9, 0x88050505);
+                if (fillW > 0) {
+                    guiGraphics.fill(barX, y + 8, barX + fillW, y + 9, theme.resource() & 0x99FFFFFF);
+                }
+            }
+        }
+    }
+
+    private void renderPrimaryAmmoRailPlaceholder(GuiGraphicsExtractor guiGraphics, Font font, int x, int y, Theme theme) {
+        guiGraphics.text(font, "LMB", x, y + 1, 0xFF5F5F5F, false);
+        int px = x + PRIMARY_RAIL_WIDTH - 18;
+        for (int i = 0; i < 4; i++) {
+            guiGraphics.fill(px, y + 3, px + 3, y + 6, 0xFF2F2F2F);
+            px += 5;
+        }
+        guiGraphics.fill(x + 19, y + 8, x + PRIMARY_RAIL_WIDTH, y + 9, theme.line() & 0x55000000);
     }
 
     private void renderSlot(GuiGraphicsExtractor guiGraphics, Font font, int x, int y, int size,
@@ -243,6 +285,8 @@ public class GauntletHudRenderer implements GuiLayer {
             case BIOTIC -> drawBiotic(guiGraphics, x, y, color, accent);
             case EXTRACTION -> drawExtraction(guiGraphics, x, y, color, accent);
             case SEDATIVE -> drawSedative(guiGraphics, x, y, color, accent);
+            case SLAM -> drawSlam(guiGraphics, x, y, color, accent);
+            case GRENADE -> drawGrenade(guiGraphics, x, y, color, accent);
             case NANO -> drawNano(guiGraphics, x, y, color, accent);
         }
     }
@@ -307,6 +351,24 @@ public class GauntletHudRenderer implements GuiLayer {
         g.fill(x + 9, y + 11, x + 12, y + 14, c);
     }
 
+    private void drawSlam(GuiGraphicsExtractor g, int x, int y, int c, int a) {
+        g.fill(x + 6, y + 1, x + 9, y + 8, c);
+        g.fill(x + 3, y + 5, x + 12, y + 8, c);
+        g.fill(x + 4, y + 9, x + 11, y + 12, a);
+        g.fill(x + 2, y + 12, x + 5, y + 14, a);
+        g.fill(x + 6, y + 12, x + 9, y + 14, a);
+        g.fill(x + 10, y + 12, x + 13, y + 14, a);
+    }
+
+    private void drawGrenade(GuiGraphicsExtractor g, int x, int y, int c, int a) {
+        g.fill(x + 5, y + 4, x + 11, y + 10, c);
+        g.fill(x + 6, y + 3, x + 10, y + 11, c);
+        g.fill(x + 7, y + 1, x + 10, y + 4, a);
+        g.fill(x + 9, y + 2, x + 13, y + 3, a);
+        g.fill(x + 3, y + 11, x + 13, y + 13, a);
+        g.fill(x + 2, y + 6, x + 4, y + 8, 0xFF65E68D);
+    }
+
     private void drawPixelQuestion(GuiGraphicsExtractor g, int x, int y, int color) {
         g.fill(x + 4, y + 2, x + 10, y + 4, color);
         g.fill(x + 9, y + 4, x + 11, y + 7, color);
@@ -320,6 +382,7 @@ public class GauntletHudRenderer implements GuiLayer {
             case NORMAL_ATTACK -> horus ? SkillIcon.BIOTIC : SkillIcon.CANNON;
             case SKILL_ONE -> horus ? SkillIcon.EXTRACTION : SkillIcon.ROCKET;
             case SKILL_TWO -> horus ? SkillIcon.SEDATIVE : SkillIcon.UPPERCUT;
+            case SKILL_THREE -> horus ? SkillIcon.GRENADE : SkillIcon.SLAM;
             case ULTIMATE -> horus ? SkillIcon.NANO : SkillIcon.METEOR;
         };
     }
@@ -332,6 +395,7 @@ public class GauntletHudRenderer implements GuiLayer {
             case SKILL_ONE -> prime && ClientMovementManager.isActiveTask(ClientRocketPunchTask.class)
                     || horus && ClientMovementManager.isActiveTask(ClientEntityPushTask.class);
             case SKILL_TWO -> prime && ClientMovementManager.isActiveTask(ClientEntityPushTask.class);
+            case SKILL_THREE -> prime && ClientMovementManager.isActiveTask(ClientSeismicSlamTask.class);
             case ULTIMATE -> prime && (ClientMovementManager.isActiveTask(ClientMeteorHoverTask.class)
                     || ClientMovementManager.isActiveTask(ClientMeteorFallTask.class))
                     || horus && mcPlayerHasNanoSurge();
@@ -343,12 +407,13 @@ public class GauntletHudRenderer implements GuiLayer {
         return player != null && ClientGauntletEffects.isNanoSurgeActive(player.getId());
     }
 
-    private String skillLabel(SkillType type, int index) {
+    private String skillLabel(SkillType type) {
         return switch (type) {
-            case NORMAL_ATTACK -> SKILL_LABELS[index];
-            case SKILL_ONE -> SKILL_LABELS[index];
-            case SKILL_TWO -> compactKeyLabel(ClientInputHandler.SKILL_TWO_KEY, SKILL_LABELS[index]);
-            case ULTIMATE -> compactKeyLabel(ClientInputHandler.ULTIMATE_KEY, SKILL_LABELS[index]);
+            case NORMAL_ATTACK -> "LMB";
+            case SKILL_ONE -> "RMB";
+            case SKILL_TWO -> compactKeyLabel(ClientInputHandler.SKILL_TWO_KEY, "Sft");
+            case SKILL_THREE -> compactKeyLabel(ClientInputHandler.SKILL_THREE_KEY, "V");
+            case ULTIMATE -> compactKeyLabel(ClientInputHandler.ULTIMATE_KEY, "X");
         };
     }
 
@@ -371,6 +436,14 @@ public class GauntletHudRenderer implements GuiLayer {
 
     private int slotSize(SkillType type) {
         return type == SkillType.ULTIMATE ? ULTIMATE_SLOT : NORMAL_SLOT;
+    }
+
+    private int primaryX(int startX) {
+        return Math.max(4, startX - PRIMARY_GAP - PRIMARY_RAIL_WIDTH);
+    }
+
+    private int primaryY(int startY) {
+        return startY + ULTIMATE_SLOT - 11;
     }
 
     private Theme themeFor(AbstractGauntletItem gauntlet) {
@@ -400,10 +473,12 @@ public class GauntletHudRenderer implements GuiLayer {
         CANNON,
         ROCKET,
         UPPERCUT,
+        SLAM,
         METEOR,
         BIOTIC,
         EXTRACTION,
         SEDATIVE,
+        GRENADE,
         NANO
     }
 

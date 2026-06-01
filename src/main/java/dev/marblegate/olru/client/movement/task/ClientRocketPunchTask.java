@@ -88,7 +88,8 @@ public class ClientRocketPunchTask implements ClientMovementTask {
 
     private void sendResult(LocalPlayer player, List<UUID> hitIds, boolean wallHit) {
         ClientPacketDistributor.sendToServer(new ServerboundMovementResultPayload(
-                taskId, player.position(), hitIds, wallHit));
+                taskId, player.position(), ServerboundMovementResultPayload.horizontalFacing(player.getLookAngle()),
+                hitIds, wallHit));
     }
 
     private List<UUID> collectImpactHits(LocalPlayer player, ClientLevel level, SweepResult sweep, Vec3 impactOffset) {

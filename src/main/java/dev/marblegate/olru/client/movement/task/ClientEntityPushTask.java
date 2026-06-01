@@ -37,7 +37,8 @@ public class ClientEntityPushTask implements ClientMovementTask {
             player.setPosRaw(pos.x + snap.x, pos.y + snap.y, pos.z + snap.z);
             player.setDeltaMovement(Vec3.ZERO);
             ClientPacketDistributor.sendToServer(new ServerboundMovementResultPayload(
-                    taskId, player.position(), List.of(), true));
+                    taskId, player.position(), ServerboundMovementResultPayload.horizontalFacing(player.getLookAngle()),
+                    List.of(), true));
             return true;
         }
 
@@ -53,7 +54,8 @@ public class ClientEntityPushTask implements ClientMovementTask {
                 player.setDeltaMovement(Vec3.ZERO);
             }
             ClientPacketDistributor.sendToServer(new ServerboundMovementResultPayload(
-                    taskId, player.position(), List.of(), false));
+                    taskId, player.position(), ServerboundMovementResultPayload.horizontalFacing(player.getLookAngle()),
+                    List.of(), false));
             return true;
         }
         return false;

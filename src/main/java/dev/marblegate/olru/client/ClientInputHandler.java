@@ -25,6 +25,7 @@ import org.lwjgl.glfw.GLFW;
 public class ClientInputHandler {
     public static final KeyMapping.Category CATEGORY = new KeyMapping.Category(Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "category"));
     public static final KeyMapping SKILL_TWO_KEY = new KeyMapping("key.olru.skill_two", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_SHIFT, CATEGORY);
+    public static final KeyMapping SKILL_THREE_KEY = new KeyMapping("key.olru.skill_three", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, CATEGORY);
     public static final KeyMapping ULTIMATE_KEY = new KeyMapping("key.olru.ultimate", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_X, CATEGORY);
 
     private static boolean wasJumpDownForMovement = false;
@@ -45,6 +46,10 @@ public class ClientInputHandler {
 
         if (consumeAnyClick(SKILL_TWO_KEY)) {
             ClientPacketDistributor.sendToServer(ServerboundGauntletSkillPayload.skillTwo());
+        }
+
+        if (consumeAnyClick(SKILL_THREE_KEY)) {
+            ClientPacketDistributor.sendToServer(ServerboundGauntletSkillPayload.skillThree());
         }
 
         if (consumeAnyClick(ULTIMATE_KEY)) {
@@ -87,11 +92,13 @@ public class ClientInputHandler {
     public static void registerBindings(RegisterKeyMappingsEvent event) {
         event.registerCategory(CATEGORY);
         event.register(SKILL_TWO_KEY);
+        event.register(SKILL_THREE_KEY);
         event.register(ULTIMATE_KEY);
     }
 
     private static void drainGauntletSkillClicks() {
         consumeAnyClick(SKILL_TWO_KEY);
+        consumeAnyClick(SKILL_THREE_KEY);
         consumeAnyClick(ULTIMATE_KEY);
     }
 

@@ -2,14 +2,17 @@
   "itemGroup.olru.gauntlets": "OLRU: Gauntlets",
   "item.olru.legacy_prime": "Legacy Prime",
   "item.olru.legacy_of_horus": "Legacy of Horus",
+  "entity.olru.biotic_grenade": "Biotic Grenade",
 
   "skill.olru.legacy_prime.normal_attack": "Hand Cannon",
   "skill.olru.legacy_prime.skill_one": "Rocket Punch",
   "skill.olru.legacy_prime.skill_two": "Rising Uppercut",
+  "skill.olru.legacy_prime.skill_three": "Seismic Slam",
   "skill.olru.legacy_prime.ultimate": "Meteor Strike",
   "skill.olru.legacy_of_horus.normal_attack": "Biotic Round",
   "skill.olru.legacy_of_horus.skill_one": "Field Extraction",
   "skill.olru.legacy_of_horus.skill_two": "Sedative Dart",
+  "skill.olru.legacy_of_horus.skill_three": "Biotic Grenade",
   "skill.olru.legacy_of_horus.ultimate": "Nano Surge",
 
   "tooltip.olru.gauntlet.style": "Style",
@@ -22,6 +25,8 @@
   "tooltip.olru.legacy_of_horus.style": "Support control through healing, extraction, sedation, and team buffs",
   "key.categories.olru.category": "OLRU",
   "key.olru.skill_two": "Gauntlet: Skill 2",
+  "key.olru.skill_three": "Gauntlet: Skill 3",
+  "key.olru.ultimate": "Gauntlet: Ultimate",
 
   "tooltip.olru.legacy_prime.normal_attack.charge": "Charge pool",
   "tooltip.olru.legacy_prime.normal_attack.stats": "%s shots | refill %s | range %s blocks | damage %s",
@@ -33,6 +38,9 @@
   "tooltip.olru.legacy_prime.skill_two.charge": "Cooldown skill, ready again after %s",
   "tooltip.olru.legacy_prime.skill_two.stats": "rise %s blocks | target speed %s b/t | damage %s | cone %s blocks/%s deg",
   "tooltip.olru.legacy_prime.skill_two.mechanic": "Launches you upward and strikes enemies in front. Hit targets rise with a short upward inertia.",
+  "tooltip.olru.legacy_prime.skill_three.charge": "Cooldown skill, ready again after %s",
+  "tooltip.olru.legacy_prime.skill_three.stats": "impact %s blocks/%s deg | damage %s | slow %s | leap %s forward/%s up",
+  "tooltip.olru.legacy_prime.skill_three.mechanic": "Leap forward in an arc, then slam the ground. Enemies in the forward shock zone take damage and are slowed.",
   "tooltip.olru.legacy_prime.ultimate.charge": "%s%% charge per damage dealt",
   "tooltip.olru.legacy_prime.ultimate.hold_time": "Aim for up to %s before forced descent; aim time does not increase damage.",
   "tooltip.olru.legacy_prime.ultimate.stats": "fall speed %s b/t | radii %s/%s blocks | outer damage %s-%s",
@@ -48,6 +56,9 @@
   "tooltip.olru.legacy_of_horus.skill_two.charge": "Cooldown skill, ready again after %s",
   "tooltip.olru.legacy_of_horus.skill_two.stats": "range %s blocks | damage %s | sleep %s/%s bosses | flying drop %s b/t",
   "tooltip.olru.legacy_of_horus.skill_two.mechanic": "Fires a dart that disrupts hostile targets, suppresses normal creature behavior, and drags airborne targets downward.",
+  "tooltip.olru.legacy_of_horus.skill_three.charge": "Cooldown skill, ready again after %s",
+  "tooltip.olru.legacy_of_horus.skill_three.stats": "radius %s blocks | heal %s | regen %s | damage %s | throw speed %s",
+  "tooltip.olru.legacy_of_horus.skill_three.mechanic": "Throw a gravity-affected biotic grenade. It detonates on contact, healing allies and damaging enemies in the splash.",
   "tooltip.olru.legacy_of_horus.ultimate.charge": "%s%% per hostile damage | %s%% per ally healing",
   "tooltip.olru.legacy_of_horus.ultimate.stats": "range %s blocks | duration %s | heal %s | emergency %s at %s health | healing %s",
   "tooltip.olru.legacy_of_horus.ultimate.mechanic": "Empowers nearby allies with healing, damage, resistance, stronger incoming healing, and emergency aid for critically wounded targets.",
@@ -60,12 +71,14 @@
   "death.attack.olru.legacy_prime.rocket_punch_wall_impact.item": "%1$s was launched into a wall by %2$s using %3$s",
   "death.attack.olru.legacy_prime.rising_uppercut": "%1$s was launched too high by %2$s's Rising Uppercut",
   "death.attack.olru.legacy_prime.rising_uppercut.item": "%1$s was launched too high by %2$s using %3$s",
+  "death.attack.olru.legacy_prime.seismic_slam": "%1$s was crushed by %2$s's Seismic Slam",
+  "death.attack.olru.legacy_prime.seismic_slam.item": "%1$s was crushed by %2$s using %3$s",
   "death.attack.olru.legacy_prime.meteor_strike": "%1$s was flattened by %2$s's Meteor Strike",
   "death.attack.olru.legacy_prime.meteor_strike.item": "%1$s was flattened by %2$s using %3$s",
   "death.attack.olru.legacy_of_horus.biotic_round": "%1$s was dropped by %2$s's Biotic Round",
   "death.attack.olru.legacy_of_horus.biotic_round.item": "%1$s was dropped by %2$s using %3$s",
   "death.attack.olru.legacy_of_horus.sedative_dart": "%1$s slept through %2$s's Sedative Dart",
   "death.attack.olru.legacy_of_horus.sedative_dart.item": "%1$s slept through %2$s using %3$s",
-
-  "key.olru.ultimate": "Gauntlet: Ultimate"
+  "death.attack.olru.legacy_of_horus.biotic_grenade": "%1$s was caught in %2$s's Biotic Grenade",
+  "death.attack.olru.legacy_of_horus.biotic_grenade.item": "%1$s was caught in %2$s's %3$s"
 }

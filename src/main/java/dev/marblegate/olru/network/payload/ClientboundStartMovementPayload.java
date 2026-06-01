@@ -5,6 +5,7 @@ import dev.marblegate.olru.client.movement.task.ClientEntityPushTask;
 import dev.marblegate.olru.client.movement.task.ClientMeteorFallTask;
 import dev.marblegate.olru.client.movement.task.ClientMeteorHoverTask;
 import dev.marblegate.olru.client.movement.task.ClientRocketPunchTask;
+import dev.marblegate.olru.client.movement.task.ClientSeismicSlamTask;
 import dev.marblegate.olru.common.OneLastRisingUppercut;
 import dev.marblegate.olru.common.core.movement.task.MovementTaskType;
 import io.netty.buffer.ByteBuf;
@@ -48,6 +49,8 @@ public record ClientboundStartMovementPayload(
                 case ROCKET_PUNCH -> new ClientRocketPunchTask(payload.taskId(), payload.velocity(), payload.maxDistance());
                 case ENTITY_PUSH -> new ClientEntityPushTask(
                         payload.taskId(), payload.velocity(), payload.maxDistance(), payload.preserveEndVelocity());
+                case SEISMIC_SLAM -> new ClientSeismicSlamTask(
+                        payload.taskId(), payload.velocity(), payload.maxDistance(), payload.collisionDamage());
                 case METEOR_HOVER -> new ClientMeteorHoverTask(
                         payload.taskId(), payload.velocity().y(), payload.velocity().x(), payload.maxDistance());
                 case METEOR_FALL -> new ClientMeteorFallTask(payload.taskId(), payload.velocity(), payload.maxDistance());

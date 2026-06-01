@@ -13,6 +13,7 @@ import dev.marblegate.olru.common.core.movement.MovementTaskProperties;
 import dev.marblegate.olru.common.core.movement.task.EntityPushTask;
 import dev.marblegate.olru.common.core.movement.task.MeteorStrikeTask;
 import dev.marblegate.olru.common.core.movement.task.RocketPunchTask;
+import dev.marblegate.olru.common.core.movement.task.SeismicSlamTask;
 import dev.marblegate.olru.common.item.tooltip.GauntletTooltipHelper;
 import dev.marblegate.olru.common.registry.OLRUDamageTypes;
 import dev.marblegate.olru.common.util.GauntletHelper;
@@ -57,12 +58,13 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
     @Override
     public GauntletSkillGroup createDefaultSkillGroup() {
         return new GauntletSkillGroup(
-                new CooldownSkillState(OLRUConfig.LEGACY_PRIME.ROCKET_PUNCH.cooldownTicks),
-                new CooldownSkillState(OLRUConfig.LEGACY_PRIME.RISING_UPPERCUT.cooldownTicks),
-                new ConditionalChargeState(),
                 new FullChargeState(
                         OLRUConfig.LEGACY_PRIME.HAND_CANNON.cooldownTicks,
-                        OLRUConfig.LEGACY_PRIME.HAND_CANNON.maxCharges));
+                        OLRUConfig.LEGACY_PRIME.HAND_CANNON.maxCharges),
+                new CooldownSkillState(OLRUConfig.LEGACY_PRIME.ROCKET_PUNCH.cooldownTicks),
+                new CooldownSkillState(OLRUConfig.LEGACY_PRIME.RISING_UPPERCUT.cooldownTicks),
+                new CooldownSkillState(OLRUConfig.LEGACY_PRIME.SEISMIC_SLAM.cooldownTicks),
+                new ConditionalChargeState());
     }
 
     @Override
@@ -130,6 +132,34 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
             MovementManager.assign(mob, task, MovementTaskProperties.externalKnockback(player.getUUID()));
         }
         consumeSkill(player, SkillType.SKILL_TWO);
+    }
+
+    @Override
+    public void performSkillThree(ServerPlayer player) {
+        if (!isSkillReady(player, SkillType.SKILL_THREE)) return;
+        var cfg = OLRUConfig.LEGACY_PRIME.SEISMIC_SLAM;
+
+        Vec3 look = player.getLookAngle();
+        Vec3 horizontal = new Vec3(look.x, 0.0, look.z);
+        if (horizontal.lengthSqr() < 1.0E-6) horizontal = new Vec3(0.0, 0.0, 1.0);
+        Vec3 initialVelocity = horizontal.normalize()
+                .scale(cfg.leapForwardSpeed.get())
+                .add(0.0, cfg.leapUpSpeed.get(), 0.0);
+
+        MovementTaskAssignmentResult result = MovementManager.assign(player, new SeismicSlamTask(
+                initialVelocity,
+                cfg.gravity.get(),
+                cfg.maxTravelTicks.get(),
+                cfg.impactRange.get(),
+                cfg.impactConeAngleDegrees.get(),
+                (float) cfg.damage.getAsDouble(),
+                cfg.slowTicks.get(),
+                cfg.slowAmplifier.get(),
+                player.getUUID()),
+                MovementTaskProperties.playerActive(player.getUUID()));
+        if (!result.accepted()) return;
+
+        consumeSkill(player, SkillType.SKILL_THREE);
     }
 
     @Override

@@ -20,6 +20,7 @@ public class GauntletTooltipHelper {
         var handCannon = OLRUConfig.LEGACY_PRIME.HAND_CANNON;
         var rocketPunch = OLRUConfig.LEGACY_PRIME.ROCKET_PUNCH;
         var risingUppercut = OLRUConfig.LEGACY_PRIME.RISING_UPPERCUT;
+        var seismicSlam = OLRUConfig.LEGACY_PRIME.SEISMIC_SLAM;
         var meteorStrike = OLRUConfig.LEGACY_PRIME.METEOR_STRIKE;
 
         appendHeader(tooltip, "tooltip.olru.legacy_prime.style", expanded);
@@ -60,6 +61,18 @@ public class GauntletTooltipHelper {
                         number(risingUppercut.mobDamage.get()), blocks(risingUppercut.frontConeRange.get()),
                         number(risingUppercut.frontConeAngleDegrees.get())));
         appendSkill(tooltip,
+                "V",
+                "skill.olru.legacy_prime.skill_three",
+                PRIME_ACCENT,
+                Component.translatable("tooltip.olru.legacy_prime.skill_three.mechanic"),
+                Component.translatable("tooltip.olru.legacy_prime.skill_three.charge",
+                        seconds(seismicSlam.cooldownTicks.get())),
+                null,
+                Component.translatable("tooltip.olru.legacy_prime.skill_three.stats",
+                        blocks(seismicSlam.impactRange.get()), number(seismicSlam.impactConeAngleDegrees.get()),
+                        number(seismicSlam.damage.get()), seconds(seismicSlam.slowTicks.get()),
+                        number(seismicSlam.leapForwardSpeed.get()), number(seismicSlam.leapUpSpeed.get())));
+        appendSkill(tooltip,
                 "X",
                 "skill.olru.legacy_prime.ultimate",
                 PRIME_ACCENT,
@@ -78,6 +91,7 @@ public class GauntletTooltipHelper {
         var bioticRound = OLRUConfig.HORUS.BIOTIC_ROUND;
         var fieldExtraction = OLRUConfig.HORUS.FIELD_EXTRACTION;
         var sedativeDart = OLRUConfig.HORUS.SEDATIVE_DART;
+        var bioticGrenade = OLRUConfig.HORUS.BIOTIC_GRENADE;
         var nanoSurge = OLRUConfig.HORUS.NANO_SURGE;
 
         appendHeader(tooltip, "tooltip.olru.legacy_of_horus.style", expanded);
@@ -119,6 +133,18 @@ public class GauntletTooltipHelper {
                         seconds(sedativeDart.sleepTicks.get()), seconds(sedativeDart.bossSleepTicks.get()),
                         number(sedativeDart.flyingDropSpeed.get())));
         appendSkill(tooltip,
+                "V",
+                "skill.olru.legacy_of_horus.skill_three",
+                HORUS_ACCENT,
+                Component.translatable("tooltip.olru.legacy_of_horus.skill_three.mechanic"),
+                Component.translatable("tooltip.olru.legacy_of_horus.skill_three.charge",
+                        seconds(bioticGrenade.cooldownTicks.get())),
+                null,
+                Component.translatable("tooltip.olru.legacy_of_horus.skill_three.stats",
+                        blocks(bioticGrenade.explosionRadius.get()), number(bioticGrenade.healAmount.get()),
+                        seconds(bioticGrenade.regenerationTicks.get()), number(bioticGrenade.damage.get()),
+                        number(bioticGrenade.throwSpeed.get())));
+        appendSkill(tooltip,
                 "X",
                 "skill.olru.legacy_of_horus.ultimate",
                 HORUS_ACCENT,
@@ -144,12 +170,13 @@ public class GauntletTooltipHelper {
                             .withStyle(BODY)));
         }
         if (expanded) {
-            tooltip.accept(Component.literal("  ----------------").withStyle(MUTED));
+            tooltip.accept(Component.literal("  =================").withStyle(MUTED));
         }
     }
 
     private static void appendSkill(Consumer<Component> tooltip, String keyLabel, String skillNameKey, ChatFormatting accent,
             Component summary, Component chargeType, Component duration, Component keyStats) {
+        tooltip.accept(Component.literal("  ----------------").withStyle(MUTED));
         tooltip.accept(Component.literal("  [").withStyle(MUTED)
                 .append(Component.literal(keyLabel).withStyle(KEY, ChatFormatting.BOLD))
                 .append(Component.literal("] ").withStyle(MUTED))

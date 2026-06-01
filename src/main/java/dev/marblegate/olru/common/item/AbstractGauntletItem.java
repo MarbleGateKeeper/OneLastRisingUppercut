@@ -67,6 +67,8 @@ public abstract class AbstractGauntletItem extends Item {
 
     public abstract void performSkillTwo(ServerPlayer player);
 
+    public abstract void performSkillThree(ServerPlayer player);
+
     public abstract void performUltimate(ServerPlayer player);
 
     public abstract void performNormalAttack(ServerPlayer player);

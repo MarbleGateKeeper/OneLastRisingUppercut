@@ -7,6 +7,7 @@ import dev.marblegate.olru.common.core.HorusEffectTracker;
 import dev.marblegate.olru.common.core.movement.MovementManager;
 import dev.marblegate.olru.common.registry.OLRUAttachments;
 import dev.marblegate.olru.common.registry.OLRUCreativeTabs;
+import dev.marblegate.olru.common.registry.OLRUEntityTypes;
 import dev.marblegate.olru.common.registry.OLRUItems;
 import dev.marblegate.olru.config.OLRUConfig;
 import dev.marblegate.olru.network.OLRUNetwork;
@@ -26,6 +27,7 @@ public class OneLastRisingUppercut {
 
     public OneLastRisingUppercut(IEventBus modEventBus, ModContainer modContainer) {
         OLRUItems.ITEMS.register(modEventBus);
+        OLRUEntityTypes.ENTITY_TYPES.register(modEventBus);
         OLRUCreativeTabs.TABS.register(modEventBus);
         OLRUAttachments.ATTACHMENT_TYPES.register(modEventBus);
         modEventBus.addListener(OLRUNetwork::onRegisterPayloads);

@@ -24,6 +24,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 public record ServerboundMovementResultPayload(
         UUID taskId,
         Vec3 claimedPosition,
+        Vec3 facing,
         List<UUID> hitEntityIds,
         boolean wallHit) implements CustomPacketPayload {
 
@@ -36,12 +37,21 @@ public record ServerboundMovementResultPayload(
 
     public static final Type<ServerboundMovementResultPayload> TYPE = new Type<>(Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "movement_result"));
 
-    public static final StreamCodec<ByteBuf, ServerboundMovementResultPayload> STREAM_CODEC = StreamCodec.composite(
-            UUIDUtil.STREAM_CODEC, ServerboundMovementResultPayload::taskId,
-            Vec3.STREAM_CODEC, ServerboundMovementResultPayload::claimedPosition,
-            OLRUStreamCodecs.UUID_LIST, ServerboundMovementResultPayload::hitEntityIds,
-            ByteBufCodecs.BOOL, ServerboundMovementResultPayload::wallHit,
-            ServerboundMovementResultPayload::new);
+    public static final StreamCodec<ByteBuf, ServerboundMovementResultPayload> STREAM_CODEC = StreamCodec.of(
+            (buf, payload) -> {
+                UUIDUtil.STREAM_CODEC.encode(buf, payload.taskId());
+                Vec3.STREAM_CODEC.encode(buf, payload.claimedPosition());
+                Vec3.STREAM_CODEC.encode(buf, payload.facing());
+                OLRUStreamCodecs.UUID_LIST.encode(buf, payload.hitEntityIds());
+                ByteBufCodecs.BOOL.encode(buf, payload.wallHit());
+            },
+            buf -> new ServerboundMovementResultPayload(
+                    UUIDUtil.STREAM_CODEC.decode(buf),
+                    Vec3.STREAM_CODEC.decode(buf),
+                    Vec3.STREAM_CODEC.decode(buf),
+                    OLRUStreamCodecs.UUID_LIST.decode(buf),
+                    ByteBufCodecs.BOOL.decode(buf)));
+
     public static void handle(ServerboundMovementResultPayload payload, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             if (!(ctx.player() instanceof ServerPlayer player)) return;
@@ -88,12 +98,27 @@ public record ServerboundMovementResultPayload(
                 }
             }
 
-            awaiting.handleResult(player, validTargets, payload.wallHit());
-            MovementManager.complete(player);
-
             // Accept claimed position to keep server in sync
             player.teleportTo(claimed.x, claimed.y, claimed.z);
+
+            awaiting.handleResult(player, validTargets, payload.wallHit(), claimed, sanitizeFacing(player, payload.facing()));
+            MovementManager.complete(player);
         });
+    }
+
+    public static Vec3 horizontalFacing(Vec3 look) {
+        Vec3 facing = new Vec3(look.x, 0.0, look.z);
+        if (facing.lengthSqr() < 1.0E-6 || !Double.isFinite(facing.x) || !Double.isFinite(facing.z)) {
+            return Vec3.ZERO;
+        }
+        return facing.normalize();
+    }
+
+    private static Vec3 sanitizeFacing(ServerPlayer player, Vec3 facing) {
+        Vec3 horizontal = horizontalFacing(facing);
+        if (horizontal.lengthSqr() > 0.0) return horizontal;
+        horizontal = horizontalFacing(player.getLookAngle());
+        return horizontal.lengthSqr() > 0.0 ? horizontal : new Vec3(0.0, 0.0, 1.0);
     }
 
     @Override

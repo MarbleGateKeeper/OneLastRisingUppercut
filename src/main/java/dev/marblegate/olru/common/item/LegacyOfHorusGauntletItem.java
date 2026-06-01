@@ -12,6 +12,7 @@ import dev.marblegate.olru.common.core.movement.MovementManager;
 import dev.marblegate.olru.common.core.movement.MovementTaskAssignmentResult;
 import dev.marblegate.olru.common.core.movement.MovementTaskProperties;
 import dev.marblegate.olru.common.core.movement.task.EntityPushTask;
+import dev.marblegate.olru.common.entity.BioticGrenade;
 import dev.marblegate.olru.common.item.tooltip.GauntletTooltipHelper;
 import dev.marblegate.olru.common.registry.OLRUDamageTypes;
 import dev.marblegate.olru.common.util.GauntletHelper;
@@ -55,12 +56,13 @@ public class LegacyOfHorusGauntletItem extends AbstractGauntletItem {
     @Override
     public GauntletSkillGroup createDefaultSkillGroup() {
         return new GauntletSkillGroup(
-                new CooldownSkillState(OLRUConfig.HORUS.FIELD_EXTRACTION.cooldownTicks),
-                new CooldownSkillState(OLRUConfig.HORUS.SEDATIVE_DART.cooldownTicks),
-                new ConditionalChargeState(),
                 new FullChargeState(
                         OLRUConfig.HORUS.BIOTIC_ROUND.cooldownTicks,
-                        OLRUConfig.HORUS.BIOTIC_ROUND.maxCharges));
+                        OLRUConfig.HORUS.BIOTIC_ROUND.maxCharges),
+                new CooldownSkillState(OLRUConfig.HORUS.FIELD_EXTRACTION.cooldownTicks),
+                new CooldownSkillState(OLRUConfig.HORUS.SEDATIVE_DART.cooldownTicks),
+                new CooldownSkillState(OLRUConfig.HORUS.BIOTIC_GRENADE.cooldownTicks),
+                new ConditionalChargeState());
     }
 
     @Override
@@ -150,6 +152,28 @@ public class LegacyOfHorusGauntletItem extends AbstractGauntletItem {
         }
 
         consumeSkill(player, SkillType.SKILL_TWO);
+    }
+
+    @Override
+    public void performSkillThree(ServerPlayer player) {
+        if (!isSkillReady(player, SkillType.SKILL_THREE)) return;
+        var cfg = OLRUConfig.HORUS.BIOTIC_GRENADE;
+        ServerLevel level = player.level();
+
+        BioticGrenade grenade = new BioticGrenade(level, player);
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getLookAngle();
+        grenade.setPos(eye.x + look.x * 0.35, eye.y - 0.1 + look.y * 0.35, eye.z + look.z * 0.35);
+        grenade.shootFromRotation(
+                player,
+                player.getXRot(),
+                player.getYRot(),
+                0.0F,
+                (float) cfg.throwSpeed.getAsDouble(),
+                (float) cfg.throwInaccuracy.getAsDouble());
+        level.addFreshEntity(grenade);
+
+        consumeSkill(player, SkillType.SKILL_THREE);
     }
 
     @Override
