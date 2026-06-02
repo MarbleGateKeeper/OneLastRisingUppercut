@@ -71,15 +71,16 @@ public class AwaitingClientResultTask implements MovementTask {
         return maxDistance;
     }
 
-    public void handleResult(ServerPlayer player, List<LivingEntity> validEntities, boolean wallHit, Vec3 claimedPosition, Vec3 facing) {
+    public void handleResult(ServerPlayer player, List<LivingEntity> validEntities, boolean wallHit,
+            Vec3 claimedPosition, Vec3 facing, int elapsedTicks) {
         if (!validEntities.isEmpty() && onEntityHit != null) {
             onEntityHit.accept(player, validEntities);
         } else if (wallHit && onWallHit != null) {
-            onWallHit.accept(player, new MovementResultContext(claimedPosition, facing, wallHit));
+            onWallHit.accept(player, new MovementResultContext(claimedPosition, facing, wallHit, elapsedTicks));
         }
     }
 
-    public record MovementResultContext(Vec3 claimedPosition, Vec3 facing, boolean wallHit) {}
+    public record MovementResultContext(Vec3 claimedPosition, Vec3 facing, boolean wallHit, int elapsedTicks) {}
 
     @FunctionalInterface
     public interface MovementResultHandler {

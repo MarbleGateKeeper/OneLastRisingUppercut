@@ -20,20 +20,24 @@ public class SeismicSlamTask implements MovementTask {
     private final int maxTravelTicks;
     private final double impactRange;
     private final double impactConeAngleDegrees;
-    private final float damage;
+    private final float minDamage;
+    private final float maxDamage;
+    private final int fullDamageAirTicks;
     private final int slowTicks;
     private final int slowAmplifier;
     private final UUID launcherUUID;
 
     public SeismicSlamTask(Vec3 initialVelocity, double gravity, int maxTravelTicks,
-            double impactRange, double impactConeAngleDegrees, float damage,
+            double impactRange, double impactConeAngleDegrees, float minDamage, float maxDamage, int fullDamageAirTicks,
             int slowTicks, int slowAmplifier, UUID launcherUUID) {
         this.initialVelocity = initialVelocity;
         this.gravity = gravity;
         this.maxTravelTicks = maxTravelTicks;
         this.impactRange = impactRange;
         this.impactConeAngleDegrees = impactConeAngleDegrees;
-        this.damage = damage;
+        this.minDamage = minDamage;
+        this.maxDamage = maxDamage;
+        this.fullDamageAirTicks = Math.max(1, fullDamageAirTicks);
         this.slowTicks = slowTicks;
         this.slowAmplifier = slowAmplifier;
         this.launcherUUID = launcherUUID;
@@ -73,6 +77,7 @@ public class SeismicSlamTask implements MovementTask {
         ServerPlayer source = level.getServer().getPlayerList().getPlayer(launcherUUID);
         Vec3 facing = context.facing();
         List<LivingEntity> targets = entitiesInImpactCone(player, facing);
+        float damage = damageForAirtime(context.elapsedTicks());
 
         for (LivingEntity target : targets) {
             target.hurt(OLRUDamageTypes.legacyPrimeSeismicSlam(level, source), damage);
@@ -80,6 +85,11 @@ public class SeismicSlamTask implements MovementTask {
         }
 
         spawnImpactParticles(level, context.claimedPosition(), facing);
+    }
+
+    private float damageForAirtime(int elapsedTicks) {
+        float fraction = Math.clamp((float) elapsedTicks / fullDamageAirTicks, 0.0F, 1.0F);
+        return minDamage + (maxDamage - minDamage) * fraction;
     }
 
     private List<LivingEntity> entitiesInImpactCone(ServerPlayer player, Vec3 facing) {

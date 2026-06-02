@@ -4,7 +4,7 @@ import dev.marblegate.olru.common.OneLastRisingUppercut;
 import dev.marblegate.olru.common.attachment.GauntletSkillGroup;
 import dev.marblegate.olru.common.attachment.skill.ConditionalChargeState;
 import dev.marblegate.olru.common.attachment.skill.CooldownSkillState;
-import dev.marblegate.olru.common.attachment.skill.FullChargeState;
+import dev.marblegate.olru.common.attachment.skill.IncrementalChargeState;
 import dev.marblegate.olru.common.core.GauntletEffectBroadcaster;
 import dev.marblegate.olru.common.core.GauntletEventHandlers;
 import dev.marblegate.olru.common.core.movement.MovementManager;
@@ -58,7 +58,7 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
     @Override
     public GauntletSkillGroup createDefaultSkillGroup() {
         return new GauntletSkillGroup(
-                new FullChargeState(
+                new IncrementalChargeState(
                         OLRUConfig.LEGACY_PRIME.HAND_CANNON.cooldownTicks,
                         OLRUConfig.LEGACY_PRIME.HAND_CANNON.maxCharges),
                 new CooldownSkillState(OLRUConfig.LEGACY_PRIME.ROCKET_PUNCH.cooldownTicks),
@@ -152,7 +152,9 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
                 cfg.maxTravelTicks.get(),
                 cfg.impactRange.get(),
                 cfg.impactConeAngleDegrees.get(),
-                (float) cfg.damage.getAsDouble(),
+                (float) cfg.minDamage.getAsDouble(),
+                (float) cfg.maxDamage.getAsDouble(),
+                cfg.fullDamageAirTicks.get(),
                 cfg.slowTicks.get(),
                 cfg.slowAmplifier.get(),
                 player.getUUID()),

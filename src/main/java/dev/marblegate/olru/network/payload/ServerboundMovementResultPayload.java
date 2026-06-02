@@ -25,6 +25,7 @@ public record ServerboundMovementResultPayload(
         UUID taskId,
         Vec3 claimedPosition,
         Vec3 facing,
+        int elapsedTicks,
         List<UUID> hitEntityIds,
         boolean wallHit) implements CustomPacketPayload {
 
@@ -42,6 +43,7 @@ public record ServerboundMovementResultPayload(
                 UUIDUtil.STREAM_CODEC.encode(buf, payload.taskId());
                 Vec3.STREAM_CODEC.encode(buf, payload.claimedPosition());
                 Vec3.STREAM_CODEC.encode(buf, payload.facing());
+                buf.writeInt(payload.elapsedTicks());
                 OLRUStreamCodecs.UUID_LIST.encode(buf, payload.hitEntityIds());
                 ByteBufCodecs.BOOL.encode(buf, payload.wallHit());
             },
@@ -49,6 +51,7 @@ public record ServerboundMovementResultPayload(
                     UUIDUtil.STREAM_CODEC.decode(buf),
                     Vec3.STREAM_CODEC.decode(buf),
                     Vec3.STREAM_CODEC.decode(buf),
+                    buf.readInt(),
                     OLRUStreamCodecs.UUID_LIST.decode(buf),
                     ByteBufCodecs.BOOL.decode(buf)));
 
@@ -101,7 +104,8 @@ public record ServerboundMovementResultPayload(
             // Accept claimed position to keep server in sync
             player.teleportTo(claimed.x, claimed.y, claimed.z);
 
-            awaiting.handleResult(player, validTargets, payload.wallHit(), claimed, sanitizeFacing(player, payload.facing()));
+            awaiting.handleResult(player, validTargets, payload.wallHit(), claimed,
+                    sanitizeFacing(player, payload.facing()), Math.max(0, payload.elapsedTicks()));
             MovementManager.complete(player);
         });
     }

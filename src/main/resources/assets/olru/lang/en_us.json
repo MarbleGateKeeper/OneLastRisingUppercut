@@ -39,7 +39,7 @@
   "tooltip.olru.legacy_prime.skill_two.stats": "rise %s blocks | target speed %s b/t | damage %s | cone %s blocks/%s deg",
   "tooltip.olru.legacy_prime.skill_two.mechanic": "Launches you upward and strikes enemies in front. Hit targets rise with a short upward inertia.",
   "tooltip.olru.legacy_prime.skill_three.charge": "Cooldown skill, ready again after %s",
-  "tooltip.olru.legacy_prime.skill_three.stats": "impact %s blocks/%s deg | damage %s | slow %s | leap %s forward/%s up",
+  "tooltip.olru.legacy_prime.skill_three.stats": "impact %s blocks/%s deg | damage %s-%s after %s airtime | slow %s | leap %s forward/%s up",
   "tooltip.olru.legacy_prime.skill_three.mechanic": "Leap forward in an arc, then slam the ground. Enemies in the forward shock zone take damage and are slowed.",
   "tooltip.olru.legacy_prime.ultimate.charge": "%s%% charge per damage dealt",
   "tooltip.olru.legacy_prime.ultimate.hold_time": "Aim for up to %s before forced descent; aim time does not increase damage.",

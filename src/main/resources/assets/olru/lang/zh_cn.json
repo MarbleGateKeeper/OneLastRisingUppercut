@@ -39,7 +39,7 @@
   "tooltip.olru.legacy_prime.skill_two.stats": "上升 %s 格 | 目标速度 %s 格/刻 | 伤害 %s | 扇形 %s 格/%s 度",
   "tooltip.olru.legacy_prime.skill_two.mechanic": "将自己向上击飞并打击前方敌人。被击中的目标会被带向空中，并保留短暂上升惯性。",
   "tooltip.olru.legacy_prime.skill_three.charge": "冷却技能，%s 后可再次使用",
-  "tooltip.olru.legacy_prime.skill_three.stats": "冲击 %s 格/%s 度 | 伤害 %s | 减速 %s | 跃起 %s 前冲/%s 上升",
+  "tooltip.olru.legacy_prime.skill_three.stats": "冲击 %s 格/%s 度 | 伤害 %s-%s（滞空 %s 满伤害）| 减速 %s | 跃起 %s 前冲/%s 上升",
   "tooltip.olru.legacy_prime.skill_three.mechanic": "向前跃起并划出抛物线，落地时重击地面。前方冲击区内的敌人受到伤害并被减速。",
   "tooltip.olru.legacy_prime.ultimate.charge": "每造成伤害获得 %s%% 充能",
   "tooltip.olru.legacy_prime.ultimate.hold_time": "最多瞄准 %s 后强制下落；瞄准时间不提高伤害。",

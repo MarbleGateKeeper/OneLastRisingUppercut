@@ -14,6 +14,7 @@ public class ClientSeismicSlamTask implements ClientMovementTask {
     private final UUID taskId;
     private final double gravity;
     private int ticksRemaining;
+    private int elapsedTicks;
     private Vec3 velocity;
     private boolean descending;
 
@@ -21,6 +22,7 @@ public class ClientSeismicSlamTask implements ClientMovementTask {
         this.taskId = taskId;
         this.velocity = initialVelocity;
         this.ticksRemaining = Math.max(1, (int) Math.ceil(maxTravelTicks));
+        this.elapsedTicks = 0;
         this.gravity = Math.max(0.01, gravity);
         this.descending = initialVelocity.y <= 0.0;
     }
@@ -28,6 +30,7 @@ public class ClientSeismicSlamTask implements ClientMovementTask {
     @Override
     public boolean tick(LocalPlayer player, ClientLevel level) {
         player.resetFallDistance();
+        elapsedTicks++;
         if (ticksRemaining-- <= 0) {
             finish(player, true);
             return true;
@@ -68,6 +71,6 @@ public class ClientSeismicSlamTask implements ClientMovementTask {
         player.setDeltaMovement(Vec3.ZERO);
         ClientPacketDistributor.sendToServer(new ServerboundMovementResultPayload(
                 taskId, player.position(), ServerboundMovementResultPayload.horizontalFacing(player.getLookAngle()),
-                List.of(), groundImpact));
+                elapsedTicks, List.of(), groundImpact));
     }
 }

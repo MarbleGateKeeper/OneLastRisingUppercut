@@ -17,7 +17,7 @@ public class RisingUppercutConfig {
                 .defineInRange("cooldownTicks", 80, 1, 2400);
         riseHeight = builder
                 .comment("Height (blocks) the player and hit mobs are launched upward")
-                .defineInRange("riseHeight", 2.5, 1.0, 50.0);
+                .defineInRange("riseHeight", 2.0, 1.0, 50.0);
         riseSpeedPlayer = builder
                 .comment("Upward speed (blocks/tick) applied to the player")
                 .defineInRange("riseSpeedPlayer", 1.2, 0.1, 10.0);

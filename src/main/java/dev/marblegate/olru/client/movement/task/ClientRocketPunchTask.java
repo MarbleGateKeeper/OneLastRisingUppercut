@@ -64,7 +64,9 @@ public class ClientRocketPunchTask implements ClientMovementTask {
         remainingDistance -= horizontal.length();
 
         if (remainingDistance <= 0) {
-            player.setDeltaMovement(Vec3.ZERO);
+            player.setDeltaMovement(velocity);
+            player.hurtMarked = true;
+            player.resetFallDistance();
             sendResult(player, List.of(), false);
             return true;
         }
@@ -89,7 +91,7 @@ public class ClientRocketPunchTask implements ClientMovementTask {
     private void sendResult(LocalPlayer player, List<UUID> hitIds, boolean wallHit) {
         ClientPacketDistributor.sendToServer(new ServerboundMovementResultPayload(
                 taskId, player.position(), ServerboundMovementResultPayload.horizontalFacing(player.getLookAngle()),
-                hitIds, wallHit));
+                0, hitIds, wallHit));
     }
 
     private List<UUID> collectImpactHits(LocalPlayer player, ClientLevel level, SweepResult sweep, Vec3 impactOffset) {

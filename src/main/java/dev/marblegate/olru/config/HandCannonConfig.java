@@ -11,8 +11,8 @@ public class HandCannonConfig {
 
     HandCannonConfig(ModConfigSpec.Builder builder) {
         cooldownTicks = builder
-                .comment("Ticks to refill all Hand Cannon charges (FullCharge mode: one cycle fills everything)")
-                .defineInRange("cooldownTicks", 100, 1, 1200);
+                .comment("Ticks to refill one Hand Cannon ammo charge")
+                .defineInRange("cooldownTicks", 12, 1, 1200);
         maxCharges = builder
                 .comment("Maximum number of Hand Cannon charges")
                 .defineInRange("maxCharges", 4, 1, 20);

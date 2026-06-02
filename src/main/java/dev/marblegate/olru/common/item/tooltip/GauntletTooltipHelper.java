@@ -70,7 +70,8 @@ public class GauntletTooltipHelper {
                 null,
                 Component.translatable("tooltip.olru.legacy_prime.skill_three.stats",
                         blocks(seismicSlam.impactRange.get()), number(seismicSlam.impactConeAngleDegrees.get()),
-                        number(seismicSlam.damage.get()), seconds(seismicSlam.slowTicks.get()),
+                        number(seismicSlam.minDamage.get()), number(seismicSlam.maxDamage.get()),
+                        seconds(seismicSlam.fullDamageAirTicks.get()), seconds(seismicSlam.slowTicks.get()),
                         number(seismicSlam.leapForwardSpeed.get()), number(seismicSlam.leapUpSpeed.get())));
         appendSkill(tooltip,
                 "X",

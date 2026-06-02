@@ -10,7 +10,9 @@ public class SeismicSlamConfig {
     public final ModConfigSpec.IntValue maxTravelTicks;
     public final ModConfigSpec.DoubleValue impactRange;
     public final ModConfigSpec.DoubleValue impactConeAngleDegrees;
-    public final ModConfigSpec.DoubleValue damage;
+    public final ModConfigSpec.DoubleValue minDamage;
+    public final ModConfigSpec.DoubleValue maxDamage;
+    public final ModConfigSpec.IntValue fullDamageAirTicks;
     public final ModConfigSpec.IntValue slowTicks;
     public final ModConfigSpec.IntValue slowAmplifier;
 
@@ -36,9 +38,15 @@ public class SeismicSlamConfig {
         impactConeAngleDegrees = builder
                 .comment("Forward impact cone angle in degrees")
                 .defineInRange("impactConeAngleDegrees", 95.0, 10.0, 180.0);
-        damage = builder
-                .comment("Damage dealt to enemies caught in the impact area")
-                .defineInRange("damage", 8.0, 0.0, 1000.0);
+        minDamage = builder
+                .comment("Minimum damage dealt by Seismic Slam on very short airtime")
+                .defineInRange("minDamage", 4.0, 0.0, 1000.0);
+        maxDamage = builder
+                .comment("Maximum damage dealt by Seismic Slam after enough airtime")
+                .defineInRange("maxDamage", 10.0, 0.0, 1000.0);
+        fullDamageAirTicks = builder
+                .comment("Airtime in ticks required for Seismic Slam to reach maximum damage")
+                .defineInRange("fullDamageAirTicks", 40, 1, 1200);
         slowTicks = builder
                 .comment("Slowness duration applied to enemies caught by the slam")
                 .defineInRange("slowTicks", 80, 1, 1200);
