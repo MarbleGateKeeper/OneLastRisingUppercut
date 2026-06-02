@@ -17,13 +17,13 @@ public class RisingUppercutConfig {
                 .defineInRange("cooldownTicks", 80, 1, 2400);
         riseHeight = builder
                 .comment("Height (blocks) the player and hit mobs are launched upward")
-                .defineInRange("riseHeight", 8.0, 1.0, 50.0);
+                .defineInRange("riseHeight", 2.5, 1.0, 50.0);
         riseSpeedPlayer = builder
                 .comment("Upward speed (blocks/tick) applied to the player")
                 .defineInRange("riseSpeedPlayer", 1.2, 0.1, 10.0);
         riseSpeedMob = builder
                 .comment("Upward speed (blocks/tick) applied to struck mobs")
-                .defineInRange("riseSpeedMob", 1.2, 0.1, 10.0);
+                .defineInRange("riseSpeedMob", 1.0, 0.1, 10.0);
         mobDamage = builder
                 .comment("Damage dealt to each mob hit by Rising Uppercut")
                 .defineInRange("mobDamage", 10.0, 0.0, 1000.0);

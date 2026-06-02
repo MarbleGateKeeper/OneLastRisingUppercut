@@ -20,10 +20,10 @@ public class SeismicSlamConfig {
                 .defineInRange("cooldownTicks", 140, 1, 2400);
         leapForwardSpeed = builder
                 .comment("Initial forward speed in blocks per tick")
-                .defineInRange("leapForwardSpeed", 1.5, 0.1, 10.0);
+                .defineInRange("leapForwardSpeed", 0.6, 0.1, 10.0);
         leapUpSpeed = builder
                 .comment("Initial upward speed in blocks per tick")
-                .defineInRange("leapUpSpeed", 2.15, 0.1, 10.0);
+                .defineInRange("leapUpSpeed", 0.65, 0.1, 10.0);
         gravity = builder
                 .comment("Downward acceleration applied each tick during Seismic Slam")
                 .defineInRange("gravity", 0.12, 0.01, 2.0);
