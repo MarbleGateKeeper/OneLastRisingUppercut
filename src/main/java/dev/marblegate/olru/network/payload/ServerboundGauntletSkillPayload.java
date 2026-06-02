@@ -63,8 +63,7 @@ public record ServerboundGauntletSkillPayload(
         if (!(held.getItem() instanceof AbstractGauntletItem gauntlet)) return;
 
         switch (payload.skill()) {
-            case SKILL_ONE -> {
-            }
+            case SKILL_ONE -> {}
             case SKILL_TWO -> gauntlet.performSkillTwo(player);
             case SKILL_THREE -> gauntlet.performSkillThree(player);
             case ULTIMATE -> gauntlet.performUltimate(player);

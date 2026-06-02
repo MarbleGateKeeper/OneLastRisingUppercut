@@ -1,13 +1,13 @@
 package dev.marblegate.olru.client.hud;
 
+import dev.marblegate.olru.client.ClientInputHandler;
+import dev.marblegate.olru.client.effect.ClientGauntletEffects;
 import dev.marblegate.olru.client.movement.ClientMovementManager;
 import dev.marblegate.olru.client.movement.task.ClientEntityPushTask;
 import dev.marblegate.olru.client.movement.task.ClientMeteorFallTask;
 import dev.marblegate.olru.client.movement.task.ClientMeteorHoverTask;
 import dev.marblegate.olru.client.movement.task.ClientRocketPunchTask;
 import dev.marblegate.olru.client.movement.task.ClientSeismicSlamTask;
-import dev.marblegate.olru.client.effect.ClientGauntletEffects;
-import dev.marblegate.olru.client.ClientInputHandler;
 import dev.marblegate.olru.common.attachment.GauntletSkillGroup;
 import dev.marblegate.olru.common.attachment.skill.SkillDisplayData;
 import dev.marblegate.olru.common.attachment.skill.SkillStateType;
@@ -17,10 +17,10 @@ import dev.marblegate.olru.common.item.LegacyPrimeGauntletItem;
 import dev.marblegate.olru.network.payload.ServerboundGauntletSkillPayload.SkillType;
 import java.util.Locale;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.KeyMapping;
 import net.neoforged.neoforge.client.gui.GuiLayer;
 
 public class GauntletHudRenderer implements GuiLayer {

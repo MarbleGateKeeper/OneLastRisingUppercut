@@ -17,8 +17,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record ServerboundMovementResultPayload(
@@ -54,7 +54,6 @@ public record ServerboundMovementResultPayload(
                     buf.readInt(),
                     OLRUStreamCodecs.UUID_LIST.decode(buf),
                     ByteBufCodecs.BOOL.decode(buf)));
-
     public static void handle(ServerboundMovementResultPayload payload, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             if (!(ctx.player() instanceof ServerPlayer player)) return;
