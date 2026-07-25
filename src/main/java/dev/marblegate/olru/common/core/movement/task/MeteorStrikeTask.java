@@ -110,7 +110,8 @@ public class MeteorStrikeTask implements MovementTask {
                     GauntletEffectBroadcaster.stopPose(p, GauntletPoseType.METEOR_DIVE);
                     stopMeteorTarget(p);
                     onLand.run();
-                }));
+                },
+                p -> GauntletEffectBroadcaster.stopPose(p, GauntletPoseType.METEOR_DIVE)));
     }
 
     @Override

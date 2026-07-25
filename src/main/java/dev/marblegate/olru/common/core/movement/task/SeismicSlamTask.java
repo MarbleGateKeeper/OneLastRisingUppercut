@@ -63,7 +63,8 @@ public class SeismicSlamTask implements MovementTask {
         MovementManager.switchTo(player, new AwaitingClientResultTask(
                 taskId, startPos, maxValidationDistance(),
                 null,
-                this::triggerImpact));
+                this::triggerImpact,
+                p -> GauntletEffectBroadcaster.stopPose(p, GauntletPoseType.SEISMIC_SLAM_LEAP)));
         return false;
     }
 

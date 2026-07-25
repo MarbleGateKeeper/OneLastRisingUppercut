@@ -50,7 +50,8 @@ public class RocketPunchTask implements MovementTask {
         MovementManager.switchTo(player, new AwaitingClientResultTask(
                 taskId, startPos, maxDistance,
                 (p, targets) -> applyHitEffects(p, targets, false),
-                (p, context) -> GauntletEffectBroadcaster.stopPose(p, GauntletPoseType.ROCKET_PUNCH_FLIGHT)));
+                null,
+                p -> GauntletEffectBroadcaster.stopPose(p, GauntletPoseType.ROCKET_PUNCH_FLIGHT)));
         return false;
     }
 
