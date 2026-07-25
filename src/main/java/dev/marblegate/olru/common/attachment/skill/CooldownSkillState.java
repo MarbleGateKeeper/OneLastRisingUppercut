@@ -11,7 +11,7 @@ public class CooldownSkillState implements SkillState {
 
     public CooldownSkillState(IntSupplier cdTotal) {
         this.cdTotal = cdTotal;
-        this.cdRemaining = cdTotal.getAsInt();
+        this.cdRemaining = 0;
     }
 
     private CooldownSkillState(int cdRemaining) {

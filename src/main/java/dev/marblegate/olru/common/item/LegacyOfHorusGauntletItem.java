@@ -70,12 +70,11 @@ public class LegacyOfHorusGauntletItem extends AbstractGauntletItem {
 
     @Override
     public InteractionResult use(Level level, net.minecraft.world.entity.player.Player player, InteractionHand hand) {
-        if (!isSkillReady(player, SkillType.SKILL_ONE)) return InteractionResult.PASS;
-        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer) {
+        InteractionResult result = super.use(level, player, hand);
+        if (result == InteractionResult.CONSUME && player instanceof ServerPlayer serverPlayer) {
             consumeSkill(serverPlayer, SkillType.SKILL_ONE);
         }
-        player.startUsingItem(hand);
-        return InteractionResult.CONSUME;
+        return result;
     }
 
     @Override
@@ -108,23 +107,14 @@ public class LegacyOfHorusGauntletItem extends AbstractGauntletItem {
     }
 
     @Override
-    public boolean releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeCharged) {
-        if (level.isClientSide() || !(entity instanceof ServerPlayer player)) return false;
-        int ticksHeld = getUseDuration(stack, entity) - timeCharged;
-        float chargePercent = Math.min(1f, (float) ticksHeld / getMaxChargeTicks());
-        GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.FIELD_EXTRACTION_CHANNEL);
-        GauntletEffectBroadcaster.pose(player, GauntletPoseType.FIELD_EXTRACTION_RELEASE, 0, 8);
-        GauntletSoundHelper.extractionRelease(player.level(), player.position());
-        performSkillOne(player, chargePercent);
-        return true;
-    }
-
-    @Override
     public void onStopUsing(ItemStack stack, LivingEntity entity, int count) {}
 
     @Override
     public void performSkillOne(ServerPlayer player, float chargePercent) {
         var cfg = OLRUConfig.HORUS.FIELD_EXTRACTION;
+        GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.FIELD_EXTRACTION_CHANNEL);
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.FIELD_EXTRACTION_RELEASE, 0, 8);
+        GauntletSoundHelper.extractionRelease(player.level(), player.position());
 
         List<LivingEntity> allies = GauntletHelper.alliesInFrontCone(
                 player, cfg.allyLockRange.get(), cfg.allyConeAngleDegrees.get());

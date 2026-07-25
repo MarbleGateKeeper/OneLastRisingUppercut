@@ -4,6 +4,7 @@ import dev.marblegate.olru.common.attachment.GauntletEntityState;
 import dev.marblegate.olru.common.attachment.GauntletEntityState.GroupAccess;
 import dev.marblegate.olru.common.attachment.GauntletSkillGroup;
 import dev.marblegate.olru.common.registry.OLRUAttachments;
+import dev.marblegate.olru.network.payload.ServerboundGauntletChargeReleasePayload;
 import dev.marblegate.olru.network.payload.ServerboundGauntletSkillPayload.SkillType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,6 +16,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractGauntletItem extends Item {
@@ -31,6 +33,11 @@ public abstract class AbstractGauntletItem extends Item {
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (!isSkillReady(player, SkillType.SKILL_ONE)) return InteractionResult.PASS;
+        if (!level.isClientSide() && player.isUsingItem()) {
+            // Heal a stuck server-side charge left by a client/server readiness desync:
+            // a new use packet means the client started a fresh charge, so restart cleanly.
+            player.stopUsingItem();
+        }
         player.startUsingItem(hand);
         return InteractionResult.CONSUME;
     }
@@ -49,16 +56,35 @@ public abstract class AbstractGauntletItem extends Item {
     @Override
     public boolean releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeCharged) {
         entity.setNoGravity(false);
-        if (level.isClientSide() || !(entity instanceof ServerPlayer player)) return false;
-        int ticksHeld = getUseDuration(stack, entity) - timeCharged;
-        float chargePercent = Math.min(1f, (float) ticksHeld / getMaxChargeTicks());
-        performSkillOne(player, chargePercent);
+        if (level.isClientSide()) {
+            int ticksHeld = getUseDuration(stack, entity) - timeCharged;
+            float chargePercent = Math.min(1f, (float) ticksHeld / getMaxChargeTicks());
+            ClientPacketDistributor.sendToServer(new ServerboundGauntletChargeReleasePayload(chargePercent));
+            return false;
+        }
         return true;
     }
 
     @Override
     public void onStopUsing(ItemStack stack, LivingEntity entity, int count) {
         entity.setNoGravity(false);
+    }
+
+    /**
+     * Server-side entry for {@link ServerboundGauntletChargeReleasePayload}. When the server shares
+     * the vanilla use state, the charge is recomputed from server-side timing; otherwise (the server
+     * never started the charge due to a readiness desync) the client-reported charge is used.
+     */
+    public void handleChargeRelease(ServerPlayer player, float clientChargePercent) {
+        float chargePercent = Math.clamp(clientChargePercent, 0f, 1f);
+        if (player.isUsingItem()
+                && player.getUsedItemHand() == InteractionHand.MAIN_HAND
+                && player.getUseItem().getItem() == this) {
+            int heldTicks = getUseDuration(player.getUseItem(), player) - player.getUseItemRemainingTicks();
+            chargePercent = Math.min(1f, (float) heldTicks / getMaxChargeTicks());
+            player.stopUsingItem();
+        }
+        performSkillOne(player, chargePercent);
     }
 
     // Skill entry points

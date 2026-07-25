@@ -16,7 +16,7 @@ public class IncrementalChargeState implements SkillState {
         this.cdTotal = cdTotal;
         this.maxCharges = maxCharges;
         this.currentCharges = 0;
-        this.cdRemaining = cdTotal.getAsInt();
+        this.cdRemaining = 0;
     }
 
     private IncrementalChargeState(int cdRemaining, int currentCharges) {
