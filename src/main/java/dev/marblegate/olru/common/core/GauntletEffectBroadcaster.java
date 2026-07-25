@@ -56,6 +56,13 @@ public class GauntletEffectBroadcaster {
                 0f, 0f, durationTicks, true));
     }
 
+    public static void orbTether(Entity orb, Entity target, int durationTicks) {
+        if (!(orb.level() instanceof ServerLevel level)) return;
+        broadcast(level, orb.position(), new ClientboundGauntletEffectPayload(
+                EffectType.ORB_TETHER, orb.getId(), target.getId(), orb.position(),
+                0f, 0f, durationTicks, true));
+    }
+
     public static void sedated(Entity target, int durationTicks, boolean active) {
         if (!(target.level() instanceof ServerLevel level)) return;
         broadcast(level, target.position(), new ClientboundGauntletEffectPayload(
@@ -74,6 +81,31 @@ public class GauntletEffectBroadcaster {
         if (!(target.level() instanceof ServerLevel level)) return;
         broadcast(level, target.position(), new ClientboundGauntletEffectPayload(
                 EffectType.NANO_SURGE, target.getId(), -1, target.position(),
+                0f, 0f, 0, false));
+    }
+
+    public static void coalescenceBeam(ServerPlayer caster, int durationTicks) {
+        broadcast(caster.level(), caster.position(), new ClientboundGauntletEffectPayload(
+                EffectType.COALESCENCE_BEAM, caster.getId(), -1, caster.position(),
+                0f, 0f, durationTicks, true));
+    }
+
+    /** Fade vignette is personal: sent directly to the fading player only, never radius-broadcast. */
+    public static void fadeVignette(ServerPlayer player, int durationTicks) {
+        PacketDistributor.sendToPlayer(player, new ClientboundGauntletEffectPayload(
+                EffectType.FADE, player.getId(), -1, player.position(),
+                0f, 0f, durationTicks, true));
+    }
+
+    public static void stopFadeVignette(ServerPlayer player) {
+        PacketDistributor.sendToPlayer(player, new ClientboundGauntletEffectPayload(
+                EffectType.FADE, player.getId(), -1, player.position(),
+                0f, 0f, 0, false));
+    }
+
+    public static void stopCoalescenceBeam(ServerPlayer caster) {
+        broadcast(caster.level(), caster.position(), new ClientboundGauntletEffectPayload(
+                EffectType.COALESCENCE_BEAM, caster.getId(), -1, caster.position(),
                 0f, 0f, 0, false));
     }
 

@@ -11,6 +11,7 @@ import net.minecraft.network.chat.MutableComponent;
 public class GauntletTooltipHelper {
     private static final ChatFormatting PRIME_ACCENT = ChatFormatting.GOLD;
     private static final ChatFormatting HORUS_ACCENT = ChatFormatting.AQUA;
+    private static final ChatFormatting FINAL_ANSWER_ACCENT = ChatFormatting.LIGHT_PURPLE;
     private static final ChatFormatting LABEL = ChatFormatting.DARK_AQUA;
     private static final ChatFormatting BODY = ChatFormatting.GRAY;
     private static final ChatFormatting MUTED = ChatFormatting.DARK_GRAY;
@@ -157,6 +158,74 @@ public class GauntletTooltipHelper {
                         blocks(nanoSurge.range.get()), seconds(nanoSurge.buffTicks.get()),
                         number(nanoSurge.healAmount.get()), number(nanoSurge.emergencyHealAmount.get()),
                         percent(nanoSurge.emergencyHealthFraction.get()), multiplier(nanoSurge.healingMultiplier.get())));
+    }
+
+    public static void appendFinalAnswer(Consumer<Component> tooltip, boolean expanded) {
+        var bioticGrasp = OLRUConfig.FINAL_ANSWER.BIOTIC_GRASP;
+        var bioticSpray = OLRUConfig.FINAL_ANSWER.BIOTIC_SPRAY;
+        var fade = OLRUConfig.FINAL_ANSWER.FADE;
+        var bioticOrb = OLRUConfig.FINAL_ANSWER.BIOTIC_ORB;
+        var coalescence = OLRUConfig.FINAL_ANSWER.COALESCENCE;
+
+        appendHeader(tooltip, "tooltip.olru.final_answer.style", expanded);
+        if (!expanded) return;
+        appendSkill(tooltip,
+                "LMB",
+                "skill.olru.final_answer.skill_one",
+                FINAL_ANSWER_ACCENT,
+                Component.translatable("tooltip.olru.final_answer.normal_attack.mechanic"),
+                Component.translatable("tooltip.olru.final_answer.normal_attack.charge",
+                        percent(bioticSpray.energyDrainPerTick.get() * 20.0)),
+                null,
+                Component.translatable("tooltip.olru.final_answer.normal_attack.stats",
+                        blocks(bioticSpray.range.get()), number(bioticSpray.coneAngleDegrees.get()),
+                        number(bioticSpray.healPerTick.get()), seconds(bioticSpray.lingerTicks.get())));
+        appendSkill(tooltip,
+                "RMB",
+                "skill.olru.final_answer.normal_attack",
+                FINAL_ANSWER_ACCENT,
+                Component.translatable("tooltip.olru.final_answer.skill_one.mechanic"),
+                Component.translatable("tooltip.olru.final_answer.skill_one.charge"),
+                null,
+                Component.translatable("tooltip.olru.final_answer.skill_one.stats",
+                        blocks(bioticGrasp.range.get()), number(bioticGrasp.coneAngleDegrees.get()),
+                        number(bioticGrasp.damage.get()), number(bioticGrasp.selfHeal.get()),
+                        percent(bioticGrasp.energyPerHit.get())));
+        appendSkill(tooltip,
+                "Sft",
+                "skill.olru.final_answer.skill_two",
+                FINAL_ANSWER_ACCENT,
+                Component.translatable("tooltip.olru.final_answer.skill_two.mechanic"),
+                Component.translatable("tooltip.olru.final_answer.skill_two.charge",
+                        seconds(fade.cooldownTicks.get())),
+                null,
+                Component.translatable("tooltip.olru.final_answer.skill_two.stats",
+                        seconds(fade.durationTicks.get()), number(fade.speedAmplifier.get()),
+                        number(fade.jumpBoostAmplifier.get())));
+        appendSkill(tooltip,
+                "V",
+                "skill.olru.final_answer.skill_three",
+                FINAL_ANSWER_ACCENT,
+                Component.translatable("tooltip.olru.final_answer.skill_three.mechanic"),
+                Component.translatable("tooltip.olru.final_answer.skill_three.charge",
+                        seconds(bioticOrb.cooldownTicks.get())),
+                null,
+                Component.translatable("tooltip.olru.final_answer.skill_three.stats",
+                        blocks(bioticOrb.radius.get()), number(bioticOrb.damagePerPulse.get()),
+                        number(bioticOrb.damagePool.get()), seconds(bioticOrb.lifeTicks.get())));
+        appendSkill(tooltip,
+                "X",
+                "skill.olru.final_answer.ultimate",
+                FINAL_ANSWER_ACCENT,
+                Component.translatable("tooltip.olru.final_answer.ultimate.mechanic"),
+                Component.translatable("tooltip.olru.final_answer.ultimate.charge",
+                        number(coalescence.chargePercentPerDamage.get()),
+                        number(bioticSpray.ultChargePercentPerHeal.get())),
+                null,
+                Component.translatable("tooltip.olru.final_answer.ultimate.stats",
+                        blocks(coalescence.length.get()), seconds(coalescence.durationTicks.get()),
+                        number(coalescence.enemyDamagePerPulse.get()), number(coalescence.allyHealPerPulse.get()),
+                        number(coalescence.selfHealPerPulse.get())));
     }
 
     private static void appendHeader(Consumer<Component> tooltip, String styleKey, boolean expanded) {

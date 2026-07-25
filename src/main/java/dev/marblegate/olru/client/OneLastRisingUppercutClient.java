@@ -4,10 +4,12 @@ import dev.marblegate.olru.client.animation.ClientFirstPersonAnimator;
 import dev.marblegate.olru.client.animation.ClientGauntletAnimations;
 import dev.marblegate.olru.client.effect.ClientCameraEffects;
 import dev.marblegate.olru.client.effect.ClientGauntletEffects;
+import dev.marblegate.olru.client.hud.FadeVignetteRenderer;
 import dev.marblegate.olru.client.hud.GauntletHudRenderer;
 import dev.marblegate.olru.client.hud.SedationOverlayRenderer;
 import dev.marblegate.olru.client.movement.ClientMovementInteractionState;
 import dev.marblegate.olru.client.movement.ClientMovementManager;
+import dev.marblegate.olru.client.render.BioticOrbRenderer;
 import dev.marblegate.olru.client.render.effect.GauntletClientEffectRenderers;
 import dev.marblegate.olru.common.OneLastRisingUppercut;
 import dev.marblegate.olru.common.attachment.GauntletEntityState;
@@ -56,10 +58,14 @@ public class OneLastRisingUppercutClient {
         event.registerAboveAll(
                 Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "sedation_overlay"),
                 new SedationOverlayRenderer());
+        event.registerAboveAll(
+                Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "fade_vignette"),
+                new FadeVignetteRenderer());
     }
 
     private void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(OLRUEntityTypes.BIOTIC_GRENADE.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(OLRUEntityTypes.BIOTIC_ORB.get(), BioticOrbRenderer::new);
     }
 
     private void addEntityRenderLayers(EntityRenderersEvent.AddLayers event) {

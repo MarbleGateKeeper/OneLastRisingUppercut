@@ -7,6 +7,7 @@ public class OLRUConfig {
 
     public static final LegacyPrimeGauntletConfig LEGACY_PRIME;
     public static final HorusGauntletConfig HORUS;
+    public static final FinalAnswerGauntletConfig FINAL_ANSWER;
 
     static {
         BUILDER.push("legacy_prime").comment("Configuration for Legacy Prime");
@@ -15,6 +16,10 @@ public class OLRUConfig {
 
         BUILDER.push("legacy_of_horus").comment("Configuration for Legacy of Horus");
         HORUS = new HorusGauntletConfig(BUILDER);
+        BUILDER.pop();
+
+        BUILDER.push("final_answer").comment("Configuration for The Final Answer");
+        FINAL_ANSWER = new FinalAnswerGauntletConfig(BUILDER);
         BUILDER.pop();
     }
 

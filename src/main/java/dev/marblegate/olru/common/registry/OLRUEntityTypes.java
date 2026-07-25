@@ -2,6 +2,7 @@ package dev.marblegate.olru.common.registry;
 
 import dev.marblegate.olru.common.OneLastRisingUppercut;
 import dev.marblegate.olru.common.entity.BioticGrenade;
+import dev.marblegate.olru.common.entity.BioticOrbEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -22,4 +23,13 @@ public class OLRUEntityTypes {
             .build(ResourceKey.create(
                     Registries.ENTITY_TYPE,
                     Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "biotic_grenade"))));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<BioticOrbEntity>> BIOTIC_ORB = ENTITY_TYPES.register("biotic_orb", () -> EntityType.Builder
+            .<BioticOrbEntity>of(BioticOrbEntity::new, MobCategory.MISC)
+            .sized(0.5F, 0.5F)
+            .clientTrackingRange(64)
+            .updateInterval(1)
+            .build(ResourceKey.create(
+                    Registries.ENTITY_TYPE,
+                    Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "biotic_orb"))));
 }

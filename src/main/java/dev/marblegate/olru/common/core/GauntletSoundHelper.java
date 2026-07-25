@@ -106,6 +106,36 @@ public final class GauntletSoundHelper {
         play(level, pos, SoundEvents.CONDUIT_ACTIVATE, 0.8f, 1.0f);
     }
 
+    public static void graspHit(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.SCULK_VEIN_BREAK, 0.5f, 1.2f);
+    }
+
+    public static void sprayChannel(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.FIRE_EXTINGUISH, 0.25f, 1.4f);
+    }
+
+    public static void fade(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.ILLUSIONER_MIRROR_MOVE, 0.6f, 1.2f);
+        play(level, pos, SoundEvents.ENDERMAN_TELEPORT, 0.7f, 0.8f);
+    }
+
+    public static void orbLaunch(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.ENDER_PEARL_THROW, 0.7f, 0.6f);
+    }
+
+    public static void orbPulse(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.BEACON_AMBIENT, 0.15f, 0.8f);
+    }
+
+    public static void coalescenceStart(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.BEACON_POWER_SELECT, 1.0f, 0.6f);
+        play(level, pos, SoundEvents.END_GATEWAY_SPAWN, 0.7f, 1.0f);
+    }
+
+    public static void coalescenceLoop(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.BEACON_AMBIENT, 0.5f, 0.5f);
+    }
+
     private static void play(ServerLevel level, Vec3 pos, SoundEvent sound, float volume, float pitch) {
         level.playSound(null, pos.x, pos.y, pos.z, sound, SoundSource.PLAYERS, volume, pitch);
     }

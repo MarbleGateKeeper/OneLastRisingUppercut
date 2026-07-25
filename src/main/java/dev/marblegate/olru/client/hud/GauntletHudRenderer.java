@@ -118,6 +118,15 @@ public class GauntletHudRenderer implements GuiLayer {
     private void renderPrimaryAmmoRail(GuiGraphicsExtractor guiGraphics, Font font, int x, int y, SkillDisplayData data, Theme theme) {
         guiGraphics.text(font, "LMB", x, y + 1, data.usable() ? 0xFF8F8F8F : 0xFF5F5F5F, false);
 
+        if (data.mode() == SkillStateType.CONDITIONAL) {
+            int barX = x + 19;
+            int barW = PRIMARY_RAIL_WIDTH - 19;
+            int fillW = (int) (barW * (1f - data.cdFraction()));
+            guiGraphics.fill(barX, y + 3, barX + barW, y + 3 + RESOURCE_BAR_H, 0xDD050505);
+            if (fillW > 0) guiGraphics.fill(barX, y + 3, barX + fillW, y + 3 + RESOURCE_BAR_H, theme.resource());
+            return;
+        }
+
         int max = data.maxCharges();
         if (max > 0) {
             int pipSize = 3;

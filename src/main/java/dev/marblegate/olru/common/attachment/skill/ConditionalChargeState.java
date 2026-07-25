@@ -7,13 +7,24 @@ import io.netty.buffer.ByteBuf;
 
 public class ConditionalChargeState implements SkillState {
     private float progress; // 0..1
+    private final boolean fullRequired;
 
     public ConditionalChargeState() {
-        this.progress = 0f;
+        this(0f);
     }
 
     private ConditionalChargeState(float progress) {
+        this(progress, true);
+    }
+
+    private ConditionalChargeState(float progress, boolean fullRequired) {
         this.progress = Math.clamp(progress, 0f, 1f);
+        this.fullRequired = fullRequired;
+    }
+
+    /** Resource mode (e.g. biotic energy): usable whenever any progress remains. Runtime-only flag, never serialized. */
+    public static ConditionalChargeState resource() {
+        return new ConditionalChargeState(0f, false);
     }
 
     public void addProgress(float delta) {
@@ -29,7 +40,7 @@ public class ConditionalChargeState implements SkillState {
 
     @Override
     public boolean isUsable() {
-        return progress >= 1f;
+        return fullRequired ? progress >= 1f : progress > 0f;
     }
 
     @Override

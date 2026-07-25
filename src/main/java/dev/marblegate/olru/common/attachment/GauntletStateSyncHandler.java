@@ -27,6 +27,7 @@ public class GauntletStateSyncHandler {
 
         changed |= ensureGauntletState(player, state, OLRUItems.LEGACY_PRIME::get);
         changed |= ensureGauntletState(player, state, OLRUItems.LEGACY_OF_HORUS::get);
+        changed |= ensureGauntletState(player, state, OLRUItems.FINAL_ANSWER::get);
 
         if (changed) {
             player.setData(OLRUAttachments.GAUNTLET_STATE.get(), state);

@@ -21,7 +21,12 @@ public enum GauntletPoseType {
     SEDATIVE_DART_FIRE(13),
     BIOTIC_GRENADE_THROW(14),
     NANO_SURGE_CAST(15),
-    SEDATED_SLUMP(16);
+    SEDATED_SLUMP(16),
+    GRASP_FIRE(17),
+    SPRAY_CHANNEL(18),
+    FADE(19),
+    ORB_THROW(20),
+    COALESCENCE_CHANNEL(21);
 
     private final byte networkId;
 

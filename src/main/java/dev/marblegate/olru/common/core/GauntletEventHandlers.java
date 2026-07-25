@@ -4,6 +4,7 @@ import dev.marblegate.olru.common.attachment.GauntletEntityState;
 import dev.marblegate.olru.common.attachment.GauntletSkillGroup;
 import dev.marblegate.olru.common.attachment.skill.ConditionalChargeState;
 import dev.marblegate.olru.common.attachment.skill.SkillState;
+import dev.marblegate.olru.common.item.FinalAnswerGauntletItem;
 import dev.marblegate.olru.common.item.LegacyOfHorusGauntletItem;
 import dev.marblegate.olru.common.item.LegacyPrimeGauntletItem;
 import dev.marblegate.olru.common.registry.OLRUAttachments;
@@ -29,6 +30,13 @@ public class GauntletEventHandlers {
             addHorusNanoCharge(
                     player,
                     event.getNewDamage() * (float) (OLRUConfig.HORUS.NANO_SURGE.chargePercentPerDamage.get() / 100.0));
+            return;
+        }
+        if (player.getMainHandItem().getItem() instanceof FinalAnswerGauntletItem) {
+            if (event.getEntity() == player || GauntletHelper.isFriendly(player, event.getEntity())) return;
+            addFinalAnswerCoalescenceCharge(
+                    player,
+                    event.getNewDamage() * (float) (OLRUConfig.FINAL_ANSWER.COALESCENCE.chargePercentPerDamage.get() / 100.0));
         }
     }
 
@@ -49,6 +57,22 @@ public class GauntletEventHandlers {
     public static void addHorusNanoCharge(ServerPlayer player, float progress) {
         if (progress <= 0f) return;
         if (!(player.getMainHandItem().getItem() instanceof LegacyOfHorusGauntletItem gauntlet)) return;
+
+        GauntletEntityState state = player.getData(OLRUAttachments.GAUNTLET_STATE.get());
+        GauntletSkillGroup group = state.getOrCreate(
+                gauntlet.gauntletId(), gauntlet::createDefaultSkillGroup).group();
+
+        SkillState ultimateState = group.get(SkillType.ULTIMATE);
+        if (!(ultimateState instanceof ConditionalChargeState ccs)) return;
+        if (ccs.isUsable()) return;
+
+        ccs.addProgress(progress);
+        player.setData(OLRUAttachments.GAUNTLET_STATE.get(), state);
+    }
+
+    public static void addFinalAnswerCoalescenceCharge(ServerPlayer player, float progress) {
+        if (progress <= 0f) return;
+        if (!(player.getMainHandItem().getItem() instanceof FinalAnswerGauntletItem gauntlet)) return;
 
         GauntletEntityState state = player.getData(OLRUAttachments.GAUNTLET_STATE.get());
         GauntletSkillGroup group = state.getOrCreate(

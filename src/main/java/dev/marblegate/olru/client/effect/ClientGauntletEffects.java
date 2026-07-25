@@ -8,6 +8,7 @@ import dev.marblegate.olru.client.animation.ClientGauntletAnimations;
 import dev.marblegate.olru.client.render.effect.NanoSurgeRenderData;
 import dev.marblegate.olru.client.render.effect.RocketPunchChargeRenderData;
 import dev.marblegate.olru.common.animation.GauntletPoseType;
+import dev.marblegate.olru.config.OLRUConfig;
 import dev.marblegate.olru.network.payload.ClientboundGauntletEffectPayload;
 import dev.marblegate.olru.network.payload.ClientboundGauntletEffectPayload.EffectType;
 import java.util.ArrayList;
@@ -39,11 +40,14 @@ public class ClientGauntletEffects {
     private static final Map<Integer, TimedFloat> ROCKET_CHARGES = new HashMap<>();
     private static final Map<Integer, MeteorTarget> METEOR_TARGETS = new HashMap<>();
     private static final Map<Long, TimedPair> EXTRACTION_BEAMS = new HashMap<>();
+    private static final Map<Long, TimedOrbTether> ORB_TETHERS = new HashMap<>();
     private static final Map<Integer, Timed> SEDATED = new HashMap<>();
     private static final Map<Integer, Timed> NANO_SURGE = new HashMap<>();
+    private static final Map<Integer, Timed> COALESCENCE_BEAMS = new HashMap<>();
+    private static final Map<Integer, Timed> FADING = new HashMap<>();
     private static final List<OneShot> ONE_SHOTS = new ArrayList<>();
 
-    private static final RenderType GAUNTLET_GLOW = RenderType.create(
+    public static final RenderType GAUNTLET_GLOW = RenderType.create(
             "olru_gauntlet_glow",
             RenderSetup.builder(RenderPipelines.LIGHTNING)
                     .bufferSize(RenderType.SMALL_BUFFER_SIZE)
@@ -72,12 +76,24 @@ public class ClientGauntletEffects {
                     EXTRACTION_BEAMS, pairKey(payload.sourceEntityId(), payload.targetEntityId()),
                     new TimedPair(payload.durationTicks(), payload.sourceEntityId(), payload.targetEntityId()),
                     payload.active());
+            case ORB_TETHER -> putOrRemove(
+                    ORB_TETHERS, pairKey(payload.sourceEntityId(), payload.targetEntityId()),
+                    new TimedOrbTether(payload.durationTicks(), payload.sourceEntityId(), payload.targetEntityId(), payload.position()),
+                    payload.active());
             case SEDATED -> putOrRemove(
                     SEDATED, payload.sourceEntityId(),
                     new Timed(payload.durationTicks()),
                     payload.active());
             case NANO_SURGE -> putOrRemove(
                     NANO_SURGE, payload.sourceEntityId(),
+                    new Timed(payload.durationTicks()),
+                    payload.active());
+            case COALESCENCE_BEAM -> putOrRemove(
+                    COALESCENCE_BEAMS, payload.sourceEntityId(),
+                    new Timed(payload.durationTicks()),
+                    payload.active());
+            case FADE -> putOrRemove(
+                    FADING, payload.sourceEntityId(),
                     new Timed(payload.durationTicks()),
                     payload.active());
             case ROCKET_PUNCH_IMPACT -> {
@@ -109,8 +125,11 @@ public class ClientGauntletEffects {
         tickMap(ROCKET_CHARGES);
         tickMap(METEOR_TARGETS);
         tickMap(EXTRACTION_BEAMS);
+        tickMap(ORB_TETHERS);
         tickMap(SEDATED);
         tickMap(NANO_SURGE);
+        tickMap(COALESCENCE_BEAMS);
+        tickMap(FADING);
         ONE_SHOTS.removeIf(shot -> clientTicks - shot.startTick >= shot.duration);
 
         SEDATED.keySet().forEach(id -> renderSleepZ(level, id));
@@ -124,7 +143,9 @@ public class ClientGauntletEffects {
         if (ROCKET_CHARGES.isEmpty()
                 && METEOR_TARGETS.isEmpty()
                 && EXTRACTION_BEAMS.isEmpty()
+                && ORB_TETHERS.isEmpty()
                 && NANO_SURGE.isEmpty()
+                && COALESCENCE_BEAMS.isEmpty()
                 && ONE_SHOTS.isEmpty())
             return;
 
@@ -141,7 +162,9 @@ public class ClientGauntletEffects {
             ROCKET_CHARGES.forEach((id, effect) -> renderRocketCharge(level, drawState, id, effect.value));
             METEOR_TARGETS.values().forEach(effect -> renderMeteorTarget(level, drawState, effect));
             EXTRACTION_BEAMS.values().forEach(effect -> renderExtractionBeam(level, drawState, effect.sourceId, effect.targetId));
+            ORB_TETHERS.values().forEach(effect -> renderOrbTether(level, drawState, effect));
             NANO_SURGE.keySet().forEach(id -> renderNanoSurge(level, drawState, id));
+            COALESCENCE_BEAMS.keySet().forEach(id -> renderCoalescenceBeam(level, drawState, id));
             ONE_SHOTS.forEach(shot -> renderOneShot(drawState, shot));
 
             MeshData mesh = buffer.build();
@@ -161,6 +184,10 @@ public class ClientGauntletEffects {
 
     public static boolean isSedated(int entityId) {
         return SEDATED.containsKey(entityId);
+    }
+
+    public static boolean isFading(int entityId) {
+        return FADING.containsKey(entityId);
     }
 
     public static boolean isNanoSurgeActive(int entityId) {
@@ -183,8 +210,11 @@ public class ClientGauntletEffects {
         ROCKET_CHARGES.clear();
         METEOR_TARGETS.clear();
         EXTRACTION_BEAMS.clear();
+        ORB_TETHERS.clear();
         SEDATED.clear();
         NANO_SURGE.clear();
+        COALESCENCE_BEAMS.clear();
+        FADING.clear();
         ONE_SHOTS.clear();
     }
 
@@ -312,6 +342,30 @@ public class ClientGauntletEffects {
         }
     }
 
+    private static void renderOrbTether(ClientLevel level, DrawState draw, TimedOrbTether effect) {
+        Entity orb = level.getEntity(effect.sourceId);
+        Entity target = level.getEntity(effect.targetId);
+        if (target == null) return;
+
+        Vec3 start = orb != null ? orb.position() : effect.orbFallback;
+        Vec3 end = target.position().add(0, target.getBbHeight() * 0.55, 0);
+        Vec3 delta = end.subtract(start);
+        double length = delta.length();
+        if (length < 0.1) return;
+
+        int steps = Math.max(2, Math.min(32, (int) (length * 2.2)));
+        for (int i = 0; i < steps; i++) {
+            double t0 = (double) i / steps;
+            double t1 = (double) (i + 1) / steps;
+            Vec3 p0 = start.add(delta.scale(t0));
+            Vec3 p1 = start.add(delta.scale(t1));
+            double pulse = 0.5 + 0.5 * Math.sin(clientTicks * 0.42 - ((t0 + t1) * 0.5) * 10.0);
+            int core = mixColor(0xB04AD8, 0xFFFFFF, pulse);
+            addBeamSegment(draw, p0, p1, 0.20f, 0xB04AD8, 0.18f);
+            addBeamSegment(draw, p0, p1, 0.07f, core, (float) (0.50 + pulse * 0.28));
+        }
+    }
+
     private static void renderNanoSurge(ClientLevel level, DrawState draw, int entityId) {
         Entity entity = level.getEntity(entityId);
         if (entity == null) return;
@@ -341,6 +395,48 @@ public class ClientGauntletEffects {
         }
 
         addBillboard(draw, center.add(0, height * 0.10, 0), width * 1.25f, 0x54EFFF, 0.10f, true);
+    }
+
+    private static void renderCoalescenceBeam(ClientLevel level, DrawState draw, int entityId) {
+        Entity entity = level.getEntity(entityId);
+        if (entity == null) return;
+
+        // Beam starts slightly forward and below the eyes; kept in sync with the server hit test.
+        Vec3 direction = entity.getLookAngle().normalize();
+        if (direction.lengthSqr() < 1.0E-6) direction = new Vec3(0, 0, 1);
+        Vec3 origin = entity.getEyePosition().add(direction.scale(0.5)).subtract(0, 0.45, 0);
+        double length = OLRUConfig.FINAL_ANSWER.COALESCENCE.length.get();
+
+        Vec3 right = direction.cross(UP).normalize();
+        if (right.lengthSqr() < 1.0E-6) right = new Vec3(1, 0, 0);
+        Vec3 up = right.cross(direction).normalize();
+
+        int steps = Math.max(4, (int) (length / 2.0));
+        for (int i = 0; i < steps; i++) {
+            Vec3 p0 = origin.add(direction.scale(length * i / steps));
+            Vec3 p1 = origin.add(direction.scale(length * (i + 1) / steps));
+            double pulse = 0.75 + 0.25 * Math.sin(clientTicks * 0.42 - i * 0.9);
+            addBeamSegment(draw, p0, p1, 0.75f, 0x8A2BE2, (float) (0.5 * pulse));
+            addBeamSegment(draw, p0, p1, 0.28f, 0xB04AD8, (float) (0.95 * pulse));
+        }
+
+        int helixPoints = steps * 3;
+        Vec3 prev = null;
+        for (int i = 0; i <= helixPoints; i++) {
+            double t = (double) i / helixPoints;
+            double angle = clientTicks * 0.25 + t * length * 1.4;
+            Vec3 offset = right.scale(Math.cos(angle) * 0.35).add(up.scale(Math.sin(angle) * 0.35));
+            Vec3 p = origin.add(direction.scale(length * t)).add(offset);
+            if (prev != null) {
+                addBeamSegment(draw, prev, p, 0.05f, 0xFFD75A, 0.9f);
+            }
+            prev = p;
+        }
+
+        Vec3 end = origin.add(direction.scale(length));
+        addBillboard(draw, end, 0.9f, 0xB04AD8, 0.55f, true);
+        addBillboard(draw, end, 0.4f, 0xFFD75A, 0.85f, true);
+        addBillboard(draw, origin.add(direction.scale(0.3)), 0.45f, 0xB04AD8, 0.3f, true);
     }
 
     private static void renderOneShot(DrawState draw, OneShot shot) {
@@ -780,6 +876,15 @@ public class ClientGauntletEffects {
             super(ticksRemaining);
             this.sourceId = sourceId;
             this.targetId = targetId;
+        }
+    }
+
+    private static class TimedOrbTether extends TimedPair {
+        final Vec3 orbFallback;
+
+        TimedOrbTether(int ticksRemaining, int sourceId, int targetId, Vec3 orbFallback) {
+            super(ticksRemaining, sourceId, targetId);
+            this.orbFallback = orbFallback;
         }
     }
 

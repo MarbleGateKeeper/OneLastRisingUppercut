@@ -3,6 +3,7 @@ package dev.marblegate.olru.client.animation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.marblegate.olru.client.animation.ClientGauntletAnimations.WeightedFp;
+import dev.marblegate.olru.client.effect.ClientGauntletEffects;
 import dev.marblegate.olru.common.item.AbstractGauntletItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -17,8 +18,13 @@ public final class ClientFirstPersonAnimator {
     private ClientFirstPersonAnimator() {}
 
     public static void onRenderHand(RenderHandEvent event) {
-        if (event.getHand() != InteractionHand.MAIN_HAND) return;
         LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null && ClientGauntletEffects.isFading(player.getId())) {
+            // Fade grants true invisibility: hide the first-person arm and held gauntlet.
+            event.setCanceled(true);
+            return;
+        }
+        if (event.getHand() != InteractionHand.MAIN_HAND) return;
         if (player == null) return;
         if (!(event.getItemStack().getItem() instanceof AbstractGauntletItem)) return;
         WeightedFp fp = ClientGauntletAnimations.evaluateFp(player.getId());

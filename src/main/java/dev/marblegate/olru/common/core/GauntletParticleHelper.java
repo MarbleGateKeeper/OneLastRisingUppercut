@@ -3,9 +3,12 @@ package dev.marblegate.olru.common.core;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.PowerParticleOption;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Server-side particle bursts for gauntlet skills, built from vanilla particle types only
@@ -77,6 +80,20 @@ public final class GauntletParticleHelper {
         }
     }
 
+    /** Colored dust trail along the view ray, like {@code GauntletEventHandlers#spawnBulletTrail}. */
+    public static void coloredTrail(ServerPlayer shooter, @Nullable Vec3 hitCenter, double range, int rgbColor) {
+        ServerLevel level = shooter.level();
+        Vec3 origin = shooter.getEyePosition();
+        Vec3 dir = shooter.getLookAngle();
+        Vec3 endpoint = hitCenter != null ? hitCenter : origin.add(dir.scale(range));
+        double dist = origin.distanceTo(endpoint);
+        DustParticleOptions dust = new DustParticleOptions(rgbColor, 0.8f);
+        for (double d = 0.5; d <= dist; d += 0.6) {
+            Vec3 p = origin.add(dir.scale(d));
+            level.sendParticles(dust, p.x, p.y, p.z, 1, 0.04, 0.04, 0.04, 0.0);
+        }
+    }
+
     public static void sedativeHit(ServerLevel level, Vec3 pos) {
         level.sendParticles(new DustParticleOptions(0xB04AD8, 1.0f), pos.x, pos.y, pos.z, 8, 0.25, 0.3, 0.25, 0.02);
         level.sendParticles(ParticleTypes.WITCH, pos.x, pos.y, pos.z, 4, 0.2, 0.25, 0.2, 0.02);
@@ -85,6 +102,26 @@ public final class GauntletParticleHelper {
     public static void nanoCastPillar(ServerLevel level, Vec3 pos) {
         for (int i = 0; i < 15; i++) {
             level.sendParticles(ParticleTypes.END_ROD, pos.x, pos.y + 0.2 + i * 0.14, pos.z, 1, 0.06, 0.02, 0.06, 0.03);
+        }
+    }
+
+    /** Purple and gold dust sprinkled along the Coalescence beam, plus a little dragon breath. */
+    public static void coalescenceBeam(ServerLevel level, Vec3 origin, Vec3 direction, double length) {
+        DustParticleOptions purple = new DustParticleOptions(0x8A2BE2, 1.0f);
+        DustParticleOptions gold = new DustParticleOptions(0xFFD75A, 0.9f);
+        RandomSource random = level.getRandom();
+        for (int i = 0; i < 10; i++) {
+            double dist = 1.0 + random.nextDouble() * length;
+            Vec3 p = origin.add(direction.scale(dist)).add(
+                    (random.nextDouble() - 0.5) * 0.8,
+                    (random.nextDouble() - 0.5) * 0.8,
+                    (random.nextDouble() - 0.5) * 0.8);
+            level.sendParticles(random.nextBoolean() ? purple : gold, p.x, p.y, p.z, 1, 0.05, 0.05, 0.05, 0.0);
+        }
+        for (int i = 0; i < 3; i++) {
+            Vec3 p = origin.add(direction.scale(1.5 + random.nextDouble() * length * 0.7));
+            level.sendParticles(PowerParticleOption.create(ParticleTypes.DRAGON_BREATH, 1.0f),
+                    p.x, p.y, p.z, 1, 0.12, 0.12, 0.12, 0.0);
         }
     }
 }

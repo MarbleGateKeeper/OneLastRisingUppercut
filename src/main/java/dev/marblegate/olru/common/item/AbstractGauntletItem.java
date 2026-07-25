@@ -101,6 +101,11 @@ public abstract class AbstractGauntletItem extends Item {
 
     public abstract int getMaxChargeTicks();
 
+    /** Whether the normal attack is a hold-to-channel ability driven by the client every few ticks. */
+    public boolean isNormalAttackContinuous() {
+        return false;
+    }
+
     public GauntletSkillGroup getSkillGroup(Player player) {
         GauntletEntityState state = player.getData(OLRUAttachments.GAUNTLET_STATE.get());
         GroupAccess access = state.getOrCreate(gauntletId(), this::createDefaultSkillGroup);

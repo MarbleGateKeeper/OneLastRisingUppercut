@@ -18,6 +18,7 @@ public class OLRUCreativeTabs {
             .displayItems((parameters, output) -> {
                 output.accept(OLRUItems.LEGACY_PRIME.get());
                 output.accept(OLRUItems.LEGACY_OF_HORUS.get());
+                output.accept(OLRUItems.FINAL_ANSWER.get());
             })
             .build());
 }

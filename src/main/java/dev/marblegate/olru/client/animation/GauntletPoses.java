@@ -83,6 +83,23 @@ public final class GauntletPoses {
                 part(GauntletPose.Part.HEAD, 35f, 0f, 0f),
                 part(GauntletPose.Part.RIGHT_ARM, 10f, 0f, 5f),
                 part(GauntletPose.Part.LEFT_ARM, 10f, 0f, -5f));
+        registerLoop(GauntletPoseType.GRASP_FIRE, 2, 3, fp(0f, 0.02f, 0.08f, 6f),
+                part(GauntletPose.Part.RIGHT_ARM, -75f, 0f, 0f),
+                part(GauntletPose.Part.BODY, 0f, -6f, 0f));
+        registerLoop(GauntletPoseType.SPRAY_CHANNEL, 3, 3, fp(-0.06f, 0f, -0.10f, -6f),
+                part(GauntletPose.Part.RIGHT_ARM, -60f, 0f, -15f),
+                part(GauntletPose.Part.BODY, 6f, 0f, 0f));
+        register(GauntletPoseType.FADE, 6, 1, 4, fp(0f, 0f, 0.12f, 0f),
+                part(GauntletPose.Part.BODY, 18f, 0f, 0f),
+                part(GauntletPose.Part.RIGHT_ARM, 25f, 0f, 0f),
+                part(GauntletPose.Part.LEFT_ARM, 25f, 0f, 0f));
+        register(GauntletPoseType.ORB_THROW, 8, 2, 5, fp(0f, 0.08f, -0.06f, -25f),
+                part(GauntletPose.Part.RIGHT_ARM, -140f, 0f, 0f),
+                part(GauntletPose.Part.BODY, 0f, -12f, 0f));
+        registerLoop(GauntletPoseType.COALESCENCE_CHANNEL, 3, 3, fp(-0.10f, 0.04f, -0.16f, -12f),
+                part(GauntletPose.Part.RIGHT_ARM, -85f, 0f, 8f),
+                part(GauntletPose.Part.LEFT_ARM, -85f, 0f, -8f),
+                part(GauntletPose.Part.BODY, 4f, 0f, 0f));
     }
 
     private GauntletPoses() {}

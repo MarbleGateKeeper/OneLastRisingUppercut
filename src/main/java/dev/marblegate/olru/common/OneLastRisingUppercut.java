@@ -2,6 +2,7 @@ package dev.marblegate.olru.common;
 
 import dev.marblegate.olru.common.attachment.GauntletEntityState;
 import dev.marblegate.olru.common.attachment.GauntletStateSyncHandler;
+import dev.marblegate.olru.common.core.FinalAnswerEffectTracker;
 import dev.marblegate.olru.common.core.GauntletEventHandlers;
 import dev.marblegate.olru.common.core.HorusEffectTracker;
 import dev.marblegate.olru.common.core.movement.MovementManager;
@@ -42,6 +43,9 @@ public class OneLastRisingUppercut {
         NeoForge.EVENT_BUS.addListener(HorusEffectTracker::onEntityLeaveLevel);
         NeoForge.EVENT_BUS.addListener(HorusEffectTracker::onEntityDeath);
         NeoForge.EVENT_BUS.addListener(HorusEffectTracker::onLivingHeal);
+        NeoForge.EVENT_BUS.addListener(FinalAnswerEffectTracker::onEntityTick);
+        NeoForge.EVENT_BUS.addListener(FinalAnswerEffectTracker::onEntityLeaveLevel);
+        NeoForge.EVENT_BUS.addListener(FinalAnswerEffectTracker::onEntityDeath);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, GauntletEventHandlers::onLivingDamagePost);
     }
 

@@ -5,8 +5,11 @@ import dev.marblegate.olru.client.movement.ClientMovementInteractionState;
 import dev.marblegate.olru.client.movement.ClientMovementManager;
 import dev.marblegate.olru.client.movement.task.ClientMovementRuntimeData;
 import dev.marblegate.olru.common.OneLastRisingUppercut;
+import dev.marblegate.olru.common.attachment.GauntletSkillGroup;
 import dev.marblegate.olru.common.item.AbstractGauntletItem;
+import dev.marblegate.olru.config.OLRUConfig;
 import dev.marblegate.olru.network.payload.ServerboundGauntletSkillPayload;
+import dev.marblegate.olru.network.payload.ServerboundGauntletSkillPayload.SkillType;
 import dev.marblegate.olru.network.payload.ServerboundMovementTaskActionPayload;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -29,17 +32,20 @@ public class ClientInputHandler {
     public static final KeyMapping ULTIMATE_KEY = new KeyMapping("key.olru.ultimate", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_X, CATEGORY);
 
     private static boolean wasJumpDownForMovement = false;
+    private static int continuousAttackTicks = 0;
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
 
         if (mc.player == null || mc.level == null || mc.screen != null) {
+            continuousAttackTicks = 0;
             drainGauntletSkillClicks();
             return;
         }
 
-        if (!(mc.player.getMainHandItem().getItem() instanceof AbstractGauntletItem)) {
+        if (!(mc.player.getMainHandItem().getItem() instanceof AbstractGauntletItem gauntlet)) {
+            continuousAttackTicks = 0;
             drainGauntletSkillClicks();
             return;
         }
@@ -54,6 +60,20 @@ public class ClientInputHandler {
 
         if (consumeAnyClick(ULTIMATE_KEY)) {
             ClientPacketDistributor.sendToServer(ServerboundGauntletSkillPayload.ultimate());
+        }
+
+        // Hold-to-channel normal attack (The Final Answer's Biotic Spray): re-fire while LMB is held.
+        GauntletSkillGroup group = gauntlet.getSyncedSkillGroup(mc.player);
+        if (gauntlet.isNormalAttackContinuous()
+                && group != null
+                && group.get(SkillType.NORMAL_ATTACK).isUsable()
+                && mc.options.keyAttack.isDown()) {
+            if (++continuousAttackTicks >= Math.max(1, OLRUConfig.FINAL_ANSWER.BIOTIC_SPRAY.pulseIntervalTicks.get())) {
+                continuousAttackTicks = 0;
+                ClientPacketDistributor.sendToServer(ServerboundGauntletSkillPayload.normalAttack());
+            }
+        } else {
+            continuousAttackTicks = 0;
         }
     }
 

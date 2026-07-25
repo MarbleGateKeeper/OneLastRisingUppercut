@@ -20,6 +20,9 @@ public class OLRUDamageTypes {
     public static final ResourceKey<DamageType> LEGACY_OF_HORUS_BIOTIC_ROUND = key("legacy_of_horus_biotic_round");
     public static final ResourceKey<DamageType> LEGACY_OF_HORUS_SEDATIVE_DART = key("legacy_of_horus_sedative_dart");
     public static final ResourceKey<DamageType> LEGACY_OF_HORUS_BIOTIC_GRENADE = key("legacy_of_horus_biotic_grenade");
+    public static final ResourceKey<DamageType> FINAL_ANSWER_BIOTIC_GRASP = key("final_answer_biotic_grasp");
+    public static final ResourceKey<DamageType> FINAL_ANSWER_BIOTIC_ORB = key("final_answer_biotic_orb");
+    public static final ResourceKey<DamageType> FINAL_ANSWER_COALESCENCE = key("final_answer_coalescence");
 
     private static ResourceKey<DamageType> key(String path) {
         return ResourceKey.create(
@@ -57,6 +60,18 @@ public class OLRUDamageTypes {
 
     public static DamageSource legacyOfHorusBioticGrenade(ServerLevel level, @Nullable ServerPlayer player) {
         return source(level, LEGACY_OF_HORUS_BIOTIC_GRENADE, player);
+    }
+
+    public static DamageSource finalAnswerBioticGrasp(ServerLevel level, @Nullable ServerPlayer player) {
+        return source(level, FINAL_ANSWER_BIOTIC_GRASP, player);
+    }
+
+    public static DamageSource finalAnswerBioticOrb(ServerLevel level, @Nullable ServerPlayer player) {
+        return source(level, FINAL_ANSWER_BIOTIC_ORB, player);
+    }
+
+    public static DamageSource finalAnswerCoalescence(ServerLevel level, @Nullable ServerPlayer player) {
+        return source(level, FINAL_ANSWER_COALESCENCE, player);
     }
 
     public static DamageSource source(
