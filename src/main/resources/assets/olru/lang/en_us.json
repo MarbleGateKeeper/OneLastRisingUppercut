@@ -80,5 +80,12 @@
   "death.attack.olru.legacy_of_horus.sedative_dart": "%1$s slept through %2$s's Sedative Dart",
   "death.attack.olru.legacy_of_horus.sedative_dart.item": "%1$s slept through %2$s using %3$s",
   "death.attack.olru.legacy_of_horus.biotic_grenade": "%1$s was caught in %2$s's Biotic Grenade",
-  "death.attack.olru.legacy_of_horus.biotic_grenade.item": "%1$s was caught in %2$s's %3$s"
+  "death.attack.olru.legacy_of_horus.biotic_grenade.item": "%1$s was caught in %2$s's %3$s",
+
+  "olru.configuration.camera": "Camera",
+  "olru.configuration.camera.button": "Camera",
+  "olru.configuration.cameraShake": "Camera Shake",
+  "olru.configuration.cameraShake.tooltip": "Camera shake on heavy impacts",
+  "olru.configuration.fovKick": "FOV Kick",
+  "olru.configuration.fovKick.tooltip": "FOV increase during movement skills"
 }

@@ -1,6 +1,8 @@
 package dev.marblegate.olru.common.core.movement.task;
 
+import dev.marblegate.olru.common.animation.GauntletPoseType;
 import dev.marblegate.olru.common.core.GauntletEffectBroadcaster;
+import dev.marblegate.olru.common.core.GauntletSoundHelper;
 import dev.marblegate.olru.common.core.movement.MovementManager;
 import dev.marblegate.olru.network.payload.ClientboundMovementTaskStatePayload;
 import dev.marblegate.olru.network.payload.ClientboundStartMovementPayload;
@@ -68,6 +70,8 @@ public class MeteorStrikeTask implements MovementTask {
             hoverY = player.getY();
             hoverStartPosition = new Vec3(player.getX(), hoverY, player.getZ());
             lastSafeHoverPosition = hoverStartPosition;
+            GauntletEffectBroadcaster.pose(player, GauntletPoseType.METEOR_HOVER, 0, 200);
+            GauntletSoundHelper.meteorHoverStart(player.level(), player.position());
         }
         player.setNoGravity(true);
         keepHoverHeight(player);
@@ -84,6 +88,9 @@ public class MeteorStrikeTask implements MovementTask {
 
     private void startFall(ServerPlayer player) {
         sendHoverState(player, false);
+        GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.METEOR_HOVER);
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.METEOR_DIVE, 0, 200);
+        GauntletSoundHelper.meteorDive(player.level(), player.position());
         keepMeteorTargetVisibleDuringFall(player);
         player.setNoGravity(false);
         UUID taskId = MovementManager.getTaskId(player);
@@ -100,6 +107,7 @@ public class MeteorStrikeTask implements MovementTask {
                 null,
                 (p, ctx) -> {
                     p.setNoGravity(false);
+                    GauntletEffectBroadcaster.stopPose(p, GauntletPoseType.METEOR_DIVE);
                     stopMeteorTarget(p);
                     onLand.run();
                 }));
@@ -122,6 +130,8 @@ public class MeteorStrikeTask implements MovementTask {
         if (entity instanceof ServerPlayer player) {
             sendHoverState(player, false);
             stopMeteorTarget(player);
+            GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.METEOR_HOVER);
+            GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.METEOR_DIVE);
         }
     }
 

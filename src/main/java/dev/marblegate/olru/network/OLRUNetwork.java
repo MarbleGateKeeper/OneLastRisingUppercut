@@ -1,6 +1,7 @@
 package dev.marblegate.olru.network;
 
 import dev.marblegate.olru.network.payload.ClientboundGauntletEffectPayload;
+import dev.marblegate.olru.network.payload.ClientboundGauntletPosePayload;
 import dev.marblegate.olru.network.payload.ClientboundMovementTaskStatePayload;
 import dev.marblegate.olru.network.payload.ClientboundStartMovementPayload;
 import dev.marblegate.olru.network.payload.ClientboundStopMovementPayload;
@@ -12,7 +13,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public class OLRUNetwork {
     public static void onRegisterPayloads(RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar("1");
+        final PayloadRegistrar registrar = event.registrar("2");
 
         registrar.playToServer(
                 ServerboundGauntletSkillPayload.TYPE,
@@ -33,6 +34,11 @@ public class OLRUNetwork {
                 ClientboundGauntletEffectPayload.TYPE,
                 ClientboundGauntletEffectPayload.STREAM_CODEC,
                 ClientboundGauntletEffectPayload::handle);
+
+        registrar.playToClient(
+                ClientboundGauntletPosePayload.TYPE,
+                ClientboundGauntletPosePayload.STREAM_CODEC,
+                ClientboundGauntletPosePayload::handle);
 
         registrar.playToClient(
                 ClientboundMovementTaskStatePayload.TYPE,

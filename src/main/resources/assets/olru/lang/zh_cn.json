@@ -80,5 +80,12 @@
   "death.attack.olru.legacy_of_horus.sedative_dart": "%1$s 没能熬过 %2$s 的镇静飞针",
   "death.attack.olru.legacy_of_horus.sedative_dart.item": "%1$s 没能熬过 %2$s 的 %3$s",
   "death.attack.olru.legacy_of_horus.biotic_grenade": "%1$s 被 %2$s 的生物手雷波及了",
-  "death.attack.olru.legacy_of_horus.biotic_grenade.item": "%1$s 被 %2$s 的 %3$s 波及了"
+  "death.attack.olru.legacy_of_horus.biotic_grenade.item": "%1$s 被 %2$s 的 %3$s 波及了",
+
+  "olru.configuration.camera": "摄像机",
+  "olru.configuration.camera.button": "摄像机",
+  "olru.configuration.cameraShake": "屏幕震动",
+  "olru.configuration.cameraShake.tooltip": "受到重击时屏幕震动",
+  "olru.configuration.fovKick": "视场角提升",
+  "olru.configuration.fovKick.tooltip": "位移技能期间提升视场角"
 }

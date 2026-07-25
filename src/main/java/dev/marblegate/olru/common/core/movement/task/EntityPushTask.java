@@ -1,5 +1,7 @@
 package dev.marblegate.olru.common.core.movement.task;
 
+import dev.marblegate.olru.common.core.GauntletParticleHelper;
+import dev.marblegate.olru.common.core.GauntletSoundHelper;
 import dev.marblegate.olru.common.core.movement.MovementManager;
 import dev.marblegate.olru.common.registry.OLRUDamageTypes;
 import dev.marblegate.olru.common.util.SweptCollisionHelper;
@@ -89,6 +91,11 @@ public class EntityPushTask implements MovementTask {
             entity.setDeltaMovement(Vec3.ZERO);
             entity.hurtMarked = true;
             if (collisionDamage > 0) entity.hurt(resolveDamageSource(level), collisionDamage);
+            if (collisionDamageType != null) {
+                Vec3 impact = entity.position().add(0, entity.getBbHeight() * 0.5, 0);
+                GauntletParticleHelper.wallImpactBurst(level, impact);
+                GauntletSoundHelper.rocketWallImpact(level, impact);
+            }
             return true;
         }
 

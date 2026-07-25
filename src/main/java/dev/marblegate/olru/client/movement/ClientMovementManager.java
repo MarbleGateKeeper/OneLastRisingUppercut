@@ -1,5 +1,7 @@
 package dev.marblegate.olru.client.movement;
 
+import dev.marblegate.olru.client.effect.ClientCameraEffects;
+import dev.marblegate.olru.client.movement.task.ClientEntityPushTask;
 import dev.marblegate.olru.client.movement.task.ClientMovementRuntimeData;
 import dev.marblegate.olru.client.movement.task.ClientMovementTask;
 import dev.marblegate.olru.client.movement.task.ClientMovementTask.RuntimeDataResult;
@@ -19,6 +21,8 @@ public class ClientMovementManager {
         if (activeTask != null && mc.player != null) activeTask.onCancelled(mc.player);
         activeTaskId = taskId;
         activeTask = task;
+        // Entity push covers Rocket Punch victims and the Rising Uppercut launch
+        if (task instanceof ClientEntityPushTask) ClientCameraEffects.shake(0.5f);
     }
 
     public static void stopAndCorrect(UUID taskId, boolean force, Vec3 correctionPosition) {

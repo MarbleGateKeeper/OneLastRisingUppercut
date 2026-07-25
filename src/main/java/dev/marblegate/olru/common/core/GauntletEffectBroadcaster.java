@@ -1,7 +1,10 @@
 package dev.marblegate.olru.common.core;
 
+import dev.marblegate.olru.common.animation.GauntletPoseType;
 import dev.marblegate.olru.network.payload.ClientboundGauntletEffectPayload;
 import dev.marblegate.olru.network.payload.ClientboundGauntletEffectPayload.EffectType;
+import dev.marblegate.olru.network.payload.ClientboundGauntletPosePayload;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -74,7 +77,51 @@ public class GauntletEffectBroadcaster {
                 0f, 0f, 0, false));
     }
 
-    private static void broadcast(ServerLevel level, Vec3 origin, ClientboundGauntletEffectPayload payload) {
+    public static void rocketPunchImpact(ServerLevel level, Vec3 pos, float intensity) {
+        broadcast(level, pos, new ClientboundGauntletEffectPayload(
+                EffectType.ROCKET_PUNCH_IMPACT, -1, -1, pos,
+                intensity, 0f, 12, true));
+    }
+
+    public static void seismicSlamRing(ServerLevel level, Vec3 pos, float radius) {
+        broadcast(level, pos, new ClientboundGauntletEffectPayload(
+                EffectType.SEISMIC_SLAM_RING, -1, -1, pos,
+                radius, 0f, 14, true));
+    }
+
+    public static void meteorImpact(ServerPlayer caster, Vec3 pos, float radius) {
+        ClientboundGauntletEffectPayload payload = new ClientboundGauntletEffectPayload(
+                EffectType.METEOR_IMPACT, caster.getId(), -1, pos,
+                radius, 0f, 16, true);
+        PacketDistributor.sendToPlayer(caster, payload);
+        broadcast(caster.level(), pos, payload);
+    }
+
+    public static void uppercutBurst(ServerLevel level, Vec3 pos) {
+        broadcast(level, pos, new ClientboundGauntletEffectPayload(
+                EffectType.UPPERCUT_BURST, -1, -1, pos,
+                0f, 0f, 12, true));
+    }
+
+    public static void nanoSurgeCast(ServerLevel level, Vec3 pos) {
+        broadcast(level, pos, new ClientboundGauntletEffectPayload(
+                EffectType.NANO_SURGE_CAST, -1, -1, pos,
+                0f, 0f, 12, true));
+    }
+
+    public static void pose(Entity entity, GauntletPoseType pose, float param, int durationTicks) {
+        if (!(entity.level() instanceof ServerLevel level)) return;
+        broadcast(level, entity.position(), new ClientboundGauntletPosePayload(
+                entity.getId(), pose, param, durationTicks, true));
+    }
+
+    public static void stopPose(Entity entity, GauntletPoseType pose) {
+        if (!(entity.level() instanceof ServerLevel level)) return;
+        broadcast(level, entity.position(), new ClientboundGauntletPosePayload(
+                entity.getId(), pose, 0f, 0, false));
+    }
+
+    private static void broadcast(ServerLevel level, Vec3 origin, CustomPacketPayload payload) {
         for (ServerPlayer player : level.players()) {
             if (player.position().distanceToSqr(origin) <= DEFAULT_RANGE_SQR) {
                 PacketDistributor.sendToPlayer(player, payload);

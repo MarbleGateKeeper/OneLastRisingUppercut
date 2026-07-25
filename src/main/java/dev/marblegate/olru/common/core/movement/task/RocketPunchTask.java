@@ -1,5 +1,9 @@
 package dev.marblegate.olru.common.core.movement.task;
 
+import dev.marblegate.olru.common.animation.GauntletPoseType;
+import dev.marblegate.olru.common.core.GauntletEffectBroadcaster;
+import dev.marblegate.olru.common.core.GauntletParticleHelper;
+import dev.marblegate.olru.common.core.GauntletSoundHelper;
 import dev.marblegate.olru.common.core.movement.MovementManager;
 import dev.marblegate.olru.common.core.movement.MovementTaskProperties;
 import dev.marblegate.olru.common.registry.OLRUDamageTypes;
@@ -39,20 +43,34 @@ public class RocketPunchTask implements MovementTask {
 
         PacketDistributor.sendToPlayer(player, new ClientboundStartMovementPayload(
                 taskId, MovementTaskType.ROCKET_PUNCH, velocity, maxDistance, 0f, false));
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.ROCKET_PUNCH_FLIGHT, 1.0f, 200);
+        GauntletSoundHelper.rocketLaunch(level, player.position());
 
         Vec3 startPos = player.position();
         MovementManager.switchTo(player, new AwaitingClientResultTask(
                 taskId, startPos, maxDistance,
                 (p, targets) -> applyHitEffects(p, targets, false),
-                null));
+                (p, context) -> GauntletEffectBroadcaster.stopPose(p, GauntletPoseType.ROCKET_PUNCH_FLIGHT)));
         return false;
     }
 
+    @Override
+    public void onCancelled(LivingEntity entity) {
+        GauntletEffectBroadcaster.stopPose(entity, GauntletPoseType.ROCKET_PUNCH_FLIGHT);
+    }
+
     private void applyHitEffects(ServerPlayer launcher, List<LivingEntity> targets, boolean wallHit) {
+        GauntletEffectBroadcaster.stopPose(launcher, GauntletPoseType.ROCKET_PUNCH_FLIGHT);
+        GauntletEffectBroadcaster.pose(launcher, GauntletPoseType.ROCKET_PUNCH_IMPACT, 0, 8);
         if (targets.isEmpty()) return;
         ServerLevel level = launcher.level();
         ServerPlayer src = level.getServer().getPlayerList().getPlayer(launcherUUID);
         Vec3 knockbackDir = velocity.normalize();
+
+        Vec3 impactPos = launcher.position().add(0, launcher.getBbHeight() * 0.5, 0);
+        GauntletParticleHelper.rocketImpactBurst(level, impactPos);
+        GauntletEffectBroadcaster.rocketPunchImpact(level, impactPos, 1.0f);
+        GauntletSoundHelper.rocketImpact(level, impactPos);
 
         for (LivingEntity target : targets) {
             target.hurt(OLRUDamageTypes.legacyPrimeRocketPunch(level, src),

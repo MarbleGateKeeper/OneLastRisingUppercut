@@ -1,17 +1,22 @@
 package dev.marblegate.olru.client.render.effect;
 
 import com.google.common.reflect.TypeToken;
+import dev.marblegate.olru.client.animation.ClientGauntletAnimations;
 import dev.marblegate.olru.client.effect.ClientGauntletEffects;
+import net.minecraft.client.entity.ClientAvatarEntity;
 import net.minecraft.client.entity.ClientMannequin;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RenderArmEvent;
+import net.neoforged.neoforge.client.renderstate.AvatarRenderStateModifier;
 import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent;
 
 public final class GauntletClientEffectRenderers {
@@ -51,6 +56,12 @@ public final class GauntletClientEffectRenderers {
                 (LivingEntity entity, LivingEntityRenderState state) -> state.setRenderData(
                         RocketPunchChargeRenderData.KEY,
                         ClientGauntletEffects.rocketPunchChargeRenderData(entity.getId())));
+        event.registerAvatarEntityModifier(new AvatarRenderStateModifier() {
+            @Override
+            public <T extends Avatar & ClientAvatarEntity> void accept(T avatar, AvatarRenderState renderState) {
+                ClientGauntletAnimations.extractInto(avatar, renderState);
+            }
+        });
     }
 
     public static void renderFirstPersonArm(RenderArmEvent event) {

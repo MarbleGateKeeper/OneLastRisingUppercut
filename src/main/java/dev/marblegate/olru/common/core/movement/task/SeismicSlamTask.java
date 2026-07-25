@@ -1,5 +1,9 @@
 package dev.marblegate.olru.common.core.movement.task;
 
+import dev.marblegate.olru.common.animation.GauntletPoseType;
+import dev.marblegate.olru.common.core.GauntletEffectBroadcaster;
+import dev.marblegate.olru.common.core.GauntletParticleHelper;
+import dev.marblegate.olru.common.core.GauntletSoundHelper;
 import dev.marblegate.olru.common.core.movement.MovementManager;
 import dev.marblegate.olru.common.registry.OLRUDamageTypes;
 import dev.marblegate.olru.network.payload.ClientboundStartMovementPayload;
@@ -52,6 +56,8 @@ public class SeismicSlamTask implements MovementTask {
         PacketDistributor.sendToPlayer(player, new ClientboundStartMovementPayload(
                 taskId, MovementTaskType.SEISMIC_SLAM, initialVelocity,
                 maxTravelTicks, (float) gravity, false));
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.SEISMIC_SLAM_LEAP, 0, 200);
+        GauntletSoundHelper.slamLeap(level, player.position());
 
         Vec3 startPos = player.position();
         MovementManager.switchTo(player, new AwaitingClientResultTask(
@@ -59,6 +65,11 @@ public class SeismicSlamTask implements MovementTask {
                 null,
                 this::triggerImpact));
         return false;
+    }
+
+    @Override
+    public void onCancelled(LivingEntity entity) {
+        GauntletEffectBroadcaster.stopPose(entity, GauntletPoseType.SEISMIC_SLAM_LEAP);
     }
 
     private double maxValidationDistance() {
@@ -73,6 +84,8 @@ public class SeismicSlamTask implements MovementTask {
 
     private void triggerImpact(ServerPlayer player, AwaitingClientResultTask.MovementResultContext context) {
         player.resetFallDistance();
+        GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.SEISMIC_SLAM_LEAP);
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.SEISMIC_SLAM_LAND, 0, 12);
         ServerLevel level = player.level();
         ServerPlayer source = level.getServer().getPlayerList().getPlayer(launcherUUID);
         Vec3 facing = context.facing();
@@ -85,6 +98,9 @@ public class SeismicSlamTask implements MovementTask {
         }
 
         spawnImpactParticles(level, context.claimedPosition(), facing);
+        GauntletParticleHelper.slamDustFront(level, context.claimedPosition(), facing);
+        GauntletEffectBroadcaster.seismicSlamRing(level, context.claimedPosition(), (float) impactRange);
+        GauntletSoundHelper.slamLand(level, context.claimedPosition());
     }
 
     private float damageForAirtime(int elapsedTicks) {

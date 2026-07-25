@@ -3,6 +3,9 @@
   "package": "dev.marblegate.olru.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [],
+  "client": [
+    "HumanoidModelMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

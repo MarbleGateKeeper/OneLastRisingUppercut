@@ -1,12 +1,15 @@
 package dev.marblegate.olru.common.item;
 
 import dev.marblegate.olru.common.OneLastRisingUppercut;
+import dev.marblegate.olru.common.animation.GauntletPoseType;
 import dev.marblegate.olru.common.attachment.GauntletSkillGroup;
 import dev.marblegate.olru.common.attachment.skill.ConditionalChargeState;
 import dev.marblegate.olru.common.attachment.skill.CooldownSkillState;
 import dev.marblegate.olru.common.attachment.skill.FullChargeState;
 import dev.marblegate.olru.common.core.GauntletEffectBroadcaster;
 import dev.marblegate.olru.common.core.GauntletEventHandlers;
+import dev.marblegate.olru.common.core.GauntletParticleHelper;
+import dev.marblegate.olru.common.core.GauntletSoundHelper;
 import dev.marblegate.olru.common.core.HorusEffectTracker;
 import dev.marblegate.olru.common.core.movement.MovementManager;
 import dev.marblegate.olru.common.core.movement.MovementTaskAssignmentResult;
@@ -92,7 +95,16 @@ public class LegacyOfHorusGauntletItem extends AbstractGauntletItem {
             target.hurtMarked = true;
             applyProtection(target, 10, 0);
             GauntletEffectBroadcaster.fieldExtractionBeam(player, target, 4);
+            if (ticksHeld % 2 == 0) {
+                GauntletParticleHelper.extractionPullStream(player.level(),
+                        target.position().add(0, target.getBbHeight() * 0.55, 0),
+                        player.position().add(0, player.getBbHeight() * 0.58, 0));
+            }
         }
+        if (ticksHeld % 10 == 0) {
+            GauntletSoundHelper.extractionChannel(player.level(), player.position());
+        }
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.FIELD_EXTRACTION_CHANNEL, chargePercent, 4);
     }
 
     @Override
@@ -100,6 +112,9 @@ public class LegacyOfHorusGauntletItem extends AbstractGauntletItem {
         if (level.isClientSide() || !(entity instanceof ServerPlayer player)) return false;
         int ticksHeld = getUseDuration(stack, entity) - timeCharged;
         float chargePercent = Math.min(1f, (float) ticksHeld / getMaxChargeTicks());
+        GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.FIELD_EXTRACTION_CHANNEL);
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.FIELD_EXTRACTION_RELEASE, 0, 8);
+        GauntletSoundHelper.extractionRelease(player.level(), player.position());
         performSkillOne(player, chargePercent);
         return true;
     }
@@ -148,9 +163,13 @@ public class LegacyOfHorusGauntletItem extends AbstractGauntletItem {
             if (!GauntletHelper.isFriendly(player, target)) {
                 target.hurt(OLRUDamageTypes.legacyOfHorusSedativeDart(level, player), (float) cfg.damage.getAsDouble());
                 applySedative(target, cfg.sleepTicks.get(), cfg.bossSleepTicks.get(), cfg.flyingDropSpeed.get());
+                GauntletParticleHelper.sedativeHit(level, hitCenter);
+                GauntletSoundHelper.sedativeHit(level, hitCenter);
             }
         }
 
+        GauntletSoundHelper.sedativeFire(level, player.position());
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.SEDATIVE_DART_FIRE, 0, 8);
         consumeSkill(player, SkillType.SKILL_TWO);
     }
 
@@ -173,6 +192,8 @@ public class LegacyOfHorusGauntletItem extends AbstractGauntletItem {
                 (float) cfg.throwInaccuracy.getAsDouble());
         level.addFreshEntity(grenade);
 
+        GauntletSoundHelper.grenadeThrow(level, player.position());
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.BIOTIC_GRENADE_THROW, 0, 8);
         consumeSkill(player, SkillType.SKILL_THREE);
     }
 
@@ -209,8 +230,12 @@ public class LegacyOfHorusGauntletItem extends AbstractGauntletItem {
                     cfg.buffTicks.get(),
                     cfg.resistanceAmplifier.get()));
             spawnBioticBurst(level, target.position().add(0, target.getBbHeight() * 0.5, 0), ParticleTypes.END_ROD);
+            GauntletParticleHelper.nanoCastPillar(level, target.position());
         }
 
+        GauntletEffectBroadcaster.nanoSurgeCast(level, player.position());
+        GauntletSoundHelper.nanoSurge(level, player.position());
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.NANO_SURGE_CAST, 0, 16);
         consumeSkill(player, SkillType.ULTIMATE);
     }
 
@@ -223,18 +248,22 @@ public class LegacyOfHorusGauntletItem extends AbstractGauntletItem {
         var targetOpt = GauntletHelper.raycastForLiving(player, cfg.effectiveRange.get(), true);
         Vec3 hitCenter = targetOpt.map(t -> t.position().add(0, t.getBbHeight() * 0.5, 0)).orElse(null);
         GauntletEventHandlers.spawnBulletTrail(player, hitCenter, cfg.effectiveRange.get(), cfg.particleCount.getAsInt());
+        GauntletParticleHelper.muzzleFlash(level, player.getEyePosition().add(player.getLookAngle().scale(0.6)), 0x31E8FF);
+        GauntletSoundHelper.bioticRound(level, player.position());
 
         if (targetOpt.isPresent()) {
             LivingEntity target = targetOpt.get();
             if (GauntletHelper.isFriendly(player, target)) {
                 healAllyAndChargeNano(player, target, cfg.healAmount.getAsDouble());
                 spawnBioticBurst(level, hitCenter, ParticleTypes.HAPPY_VILLAGER);
+                GauntletSoundHelper.bioticHeal(level, hitCenter);
             } else {
                 target.hurt(OLRUDamageTypes.legacyOfHorusBioticRound(level, player), (float) cfg.damage.getAsDouble());
                 spawnBioticBurst(level, hitCenter, ParticleTypes.SNEEZE);
             }
         }
 
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.HORUS_BIOTIC_ROUND_RECOIL, 0, 5);
         consumeSkill(player, SkillType.NORMAL_ATTACK);
     }
 

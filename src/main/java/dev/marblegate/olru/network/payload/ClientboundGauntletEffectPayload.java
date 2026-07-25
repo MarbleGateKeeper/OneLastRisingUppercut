@@ -57,7 +57,12 @@ public record ClientboundGauntletEffectPayload(
         METEOR_TARGET(1),
         FIELD_EXTRACTION_BEAM(2),
         SEDATED(3),
-        NANO_SURGE(4);
+        NANO_SURGE(4),
+        ROCKET_PUNCH_IMPACT(5),
+        SEISMIC_SLAM_RING(6),
+        METEOR_IMPACT(7),
+        UPPERCUT_BURST(8),
+        NANO_SURGE_CAST(9);
 
         private final byte networkId;
 

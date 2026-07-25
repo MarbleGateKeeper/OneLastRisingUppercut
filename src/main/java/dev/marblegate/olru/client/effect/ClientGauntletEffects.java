@@ -4,9 +4,12 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.marblegate.olru.client.animation.ClientGauntletAnimations;
 import dev.marblegate.olru.client.render.effect.NanoSurgeRenderData;
 import dev.marblegate.olru.client.render.effect.RocketPunchChargeRenderData;
+import dev.marblegate.olru.common.animation.GauntletPoseType;
 import dev.marblegate.olru.network.payload.ClientboundGauntletEffectPayload;
+import dev.marblegate.olru.network.payload.ClientboundGauntletEffectPayload.EffectType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,9 +23,11 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -36,6 +41,7 @@ public class ClientGauntletEffects {
     private static final Map<Long, TimedPair> EXTRACTION_BEAMS = new HashMap<>();
     private static final Map<Integer, Timed> SEDATED = new HashMap<>();
     private static final Map<Integer, Timed> NANO_SURGE = new HashMap<>();
+    private static final List<OneShot> ONE_SHOTS = new ArrayList<>();
 
     private static final RenderType GAUNTLET_GLOW = RenderType.create(
             "olru_gauntlet_glow",
@@ -48,6 +54,7 @@ public class ClientGauntletEffects {
     private static final int METEOR_BLOCK_SCAN_VERTICAL_BELOW = 2;
     private static final int METEOR_BLOCK_SCAN_VERTICAL_ABOVE = 4;
     private static final int METEOR_SURFACE_REBUILD_INTERVAL_TICKS = 5;
+    private static final double IMPACT_SHAKE_RANGE = 12.0;
 
     private static int clientTicks = 0;
 
@@ -73,6 +80,20 @@ public class ClientGauntletEffects {
                     NANO_SURGE, payload.sourceEntityId(),
                     new Timed(payload.durationTicks()),
                     payload.active());
+            case ROCKET_PUNCH_IMPACT -> {
+                addOneShot(payload);
+                shakeFromImpact(payload.position(), 0f);
+            }
+            case SEISMIC_SLAM_RING -> {
+                addOneShot(payload);
+                shakeFromImpact(payload.position(), 0f);
+            }
+            case METEOR_IMPACT -> {
+                addOneShot(payload);
+                shakeFromImpact(payload.position(), 0.5f);
+            }
+            case UPPERCUT_BURST -> addOneShot(payload);
+            case NANO_SURGE_CAST -> addOneShot(payload);
         }
     }
 
@@ -90,8 +111,10 @@ public class ClientGauntletEffects {
         tickMap(EXTRACTION_BEAMS);
         tickMap(SEDATED);
         tickMap(NANO_SURGE);
+        ONE_SHOTS.removeIf(shot -> clientTicks - shot.startTick >= shot.duration);
 
         SEDATED.keySet().forEach(id -> renderSleepZ(level, id));
+        spawnFlightTrails(level);
     }
 
     public static void renderWorld(RenderLevelStageEvent.AfterTranslucentBlocks event) {
@@ -101,7 +124,8 @@ public class ClientGauntletEffects {
         if (ROCKET_CHARGES.isEmpty()
                 && METEOR_TARGETS.isEmpty()
                 && EXTRACTION_BEAMS.isEmpty()
-                && NANO_SURGE.isEmpty())
+                && NANO_SURGE.isEmpty()
+                && ONE_SHOTS.isEmpty())
             return;
 
         PoseStack poseStack = event.getPoseStack();
@@ -118,6 +142,7 @@ public class ClientGauntletEffects {
             METEOR_TARGETS.values().forEach(effect -> renderMeteorTarget(level, drawState, effect));
             EXTRACTION_BEAMS.values().forEach(effect -> renderExtractionBeam(level, drawState, effect.sourceId, effect.targetId));
             NANO_SURGE.keySet().forEach(id -> renderNanoSurge(level, drawState, id));
+            ONE_SHOTS.forEach(shot -> renderOneShot(drawState, shot));
 
             MeshData mesh = buffer.build();
             if (drawState.hasVertices && mesh != null) {
@@ -132,6 +157,10 @@ public class ClientGauntletEffects {
     public static boolean isLocalPlayerSedated() {
         Minecraft mc = Minecraft.getInstance();
         return mc.player != null && SEDATED.containsKey(mc.player.getId());
+    }
+
+    public static boolean isSedated(int entityId) {
+        return SEDATED.containsKey(entityId);
     }
 
     public static boolean isNanoSurgeActive(int entityId) {
@@ -156,6 +185,7 @@ public class ClientGauntletEffects {
         EXTRACTION_BEAMS.clear();
         SEDATED.clear();
         NANO_SURGE.clear();
+        ONE_SHOTS.clear();
     }
 
     private static <K, V extends Timed> void putOrRemove(Map<K, V> map, K key, V value, boolean active) {
@@ -168,6 +198,28 @@ public class ClientGauntletEffects {
         while (iterator.hasNext()) {
             if (--iterator.next().ticksRemaining <= 0) iterator.remove();
         }
+    }
+
+    private static void addOneShot(ClientboundGauntletEffectPayload payload) {
+        // The caster may receive the same one-shot twice (direct send + range broadcast); ignore duplicates
+        for (OneShot shot : ONE_SHOTS) {
+            if (shot.type == payload.effectType()
+                    && shot.startTick == clientTicks
+                    && shot.pos.distanceToSqr(payload.position()) < 1.0E-6)
+                return;
+        }
+        ONE_SHOTS.add(new OneShot(
+                payload.effectType(), payload.position(), payload.primaryValue(),
+                clientTicks, Math.max(1, payload.durationTicks())));
+    }
+
+    private static void shakeFromImpact(Vec3 pos, float minIntensity) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        double dist = mc.player.position().distanceTo(pos);
+        if (dist > IMPACT_SHAKE_RANGE) return;
+        float intensity = (float) (0.9 * (1.0 - dist / IMPACT_SHAKE_RANGE));
+        ClientCameraEffects.shake(Math.max(intensity, minIntensity));
     }
 
     private static void renderRocketCharge(ClientLevel level, DrawState draw, int entityId, float charge) {
@@ -291,6 +343,70 @@ public class ClientGauntletEffects {
         addBillboard(draw, center.add(0, height * 0.10, 0), width * 1.25f, 0x54EFFF, 0.10f, true);
     }
 
+    private static void renderOneShot(DrawState draw, OneShot shot) {
+        float progress = Math.clamp((float) (clientTicks - shot.startTick) / shot.duration, 0f, 1f);
+        switch (shot.type) {
+            case ROCKET_PUNCH_IMPACT -> renderRocketPunchImpact(draw, shot, progress);
+            case SEISMIC_SLAM_RING -> renderSeismicSlamRing(draw, shot, progress);
+            case METEOR_IMPACT -> renderMeteorImpact(draw, shot, progress);
+            case UPPERCUT_BURST -> renderUppercutBurst(draw, shot, progress);
+            case NANO_SURGE_CAST -> renderNanoSurgeCast(draw, shot, progress);
+            default -> {}
+        }
+    }
+
+    private static void renderRocketPunchImpact(DrawState draw, OneShot shot, float progress) {
+        double radius = progress * 1.8 * Math.max(0.2f, shot.param);
+        int color = mixColor(0xFFD75A, 0xFFFFFF, progress);
+        float alpha = 0.85f * (1.0f - progress);
+        addHorizontalRing(draw, shot.pos.add(0, 0.1, 0), radius, 0.14f, color, alpha, 40);
+        for (int i = 0; i < 8; i++) {
+            double angle = i * Math.PI / 4.0;
+            Vec3 spike = shot.pos.add(Math.cos(angle) * (radius + 0.25), 0.18, Math.sin(angle) * (radius + 0.25));
+            addBillboard(draw, spike, 0.11f * (1.0f - progress * 0.5f), color, alpha * 0.9f, true);
+        }
+    }
+
+    private static void renderSeismicSlamRing(DrawState draw, OneShot shot, float progress) {
+        double radius = Math.max(0.5f, shot.param);
+        addHorizontalRing(draw, shot.pos.add(0, 0.09, 0), progress * radius, 0.16f, 0xFF9A30, 0.55f * (1.0f - progress), 56);
+        float delayed = (float) Math.pow(progress, 0.8);
+        addHorizontalRing(draw, shot.pos.add(0, 0.15, 0), delayed * radius * 1.15, 0.11f, 0xFFC94A, 0.45f * (1.0f - delayed), 56);
+    }
+
+    private static void renderMeteorImpact(DrawState draw, OneShot shot, float progress) {
+        double radius = progress * Math.max(0.5f, shot.param);
+        int ringColor = mixColor(0xFF5A1E, 0xFF9A30, progress);
+        addHorizontalRing(draw, shot.pos.add(0, 0.12, 0), radius, 0.22f, ringColor, 0.65f * (1.0f - progress), 64);
+
+        float width = 0.7f * (1.0f - progress * 0.5f);
+        float alpha = 0.5f * (1.0f - progress);
+        Vec3 bottom = shot.pos;
+        Vec3 top = shot.pos.add(0, 12, 0);
+        addQuad(draw, bottom.subtract(width, 0, 0), bottom.add(width, 0, 0), top.add(width, 0, 0), top.subtract(width, 0, 0), 0xFF6A20, alpha);
+        addQuad(draw, bottom.subtract(0, 0, width), bottom.add(0, 0, width), top.add(0, 0, width), top.subtract(0, 0, width), 0xFF6A20, alpha);
+    }
+
+    private static void renderUppercutBurst(DrawState draw, OneShot shot, float progress) {
+        float alpha = 0.75f * (1.0f - progress);
+        for (int i = 0; i < 10; i++) {
+            double t = i / 9.0;
+            if (progress < t * 0.7) continue;
+            double angle = t * Math.PI * 4.0 + clientTicks * 0.05;
+            Vec3 p = shot.pos.add(Math.cos(angle) * 0.45, 0.15 + t * 2.0, Math.sin(angle) * 0.45);
+            addBillboard(draw, p, 0.09f, mixColor(0xFFF6C8, 0xFFFFFF, t), alpha, true);
+        }
+    }
+
+    private static void renderNanoSurgeCast(DrawState draw, OneShot shot, float progress) {
+        addHorizontalRing(draw, shot.pos.add(0, 0.1, 0), progress * 3.0, 0.14f, 0x31E8FF, 0.55f * (1.0f - progress), 48);
+        for (int i = 0; i < 6; i++) {
+            double y = 0.25 + i * 0.35 + progress * 0.8;
+            float fade = (1.0f - progress) * (1.0f - i / 6.0f * 0.5f);
+            addBillboard(draw, shot.pos.add(0, y, 0), 0.35f - i * 0.03f, 0x31E8FF, 0.28f * fade, true);
+        }
+    }
+
     private static void renderSleepZ(ClientLevel level, int entityId) {
         Entity entity = level.getEntity(entityId);
         if (entity == null) return;
@@ -299,6 +415,26 @@ public class ClientGauntletEffects {
                 entity.getBbHeight() + 0.45 + (clientTicks % 20) * 0.015,
                 Math.cos(clientTicks * 0.08 + entityId) * 0.18);
         drawZ(level, origin, 0.18, 0x8DDCFF);
+    }
+
+    private static void spawnFlightTrails(ClientLevel level) {
+        for (Player player : level.players()) {
+            GauntletPoseType pose = ClientGauntletAnimations.getActivePoseType(player.getId());
+            if (pose == null) continue;
+            Vec3 behind = player.position()
+                    .add(0, player.getBbHeight() * 0.45, 0)
+                    .subtract(player.getLookAngle().scale(0.45));
+            if (pose == GauntletPoseType.ROCKET_PUNCH_FLIGHT) {
+                level.addParticle(ParticleTypes.FLAME, behind.x, behind.y, behind.z, 0.0, 0.0, 0.0);
+                if (clientTicks % 3 == 0) {
+                    level.addParticle(ParticleTypes.SMOKE, behind.x, behind.y + 0.1, behind.z, 0.0, 0.01, 0.0);
+                }
+            } else if (pose == GauntletPoseType.METEOR_DIVE) {
+                level.addParticle(ParticleTypes.FLAME, behind.x, behind.y, behind.z, 0.0, 0.02, 0.0);
+                level.addParticle(ParticleTypes.FIREWORK, behind.x, behind.y, behind.z,
+                        (level.getRandom().nextDouble() - 0.5) * 0.15, 0.05, (level.getRandom().nextDouble() - 0.5) * 0.15);
+            }
+        }
     }
 
     private static HandPlacement rocketPunchHandPlacement(Entity entity, Vec3 camera, float charge) {
@@ -608,6 +744,22 @@ public class ClientGauntletEffects {
 
         Timed(int ticksRemaining) {
             this.ticksRemaining = ticksRemaining;
+        }
+    }
+
+    private static class OneShot {
+        final EffectType type;
+        final Vec3 pos;
+        final float param;
+        final int startTick;
+        final int duration;
+
+        OneShot(EffectType type, Vec3 pos, float param, int startTick, int duration) {
+            this.type = type;
+            this.pos = pos;
+            this.param = param;
+            this.startTick = startTick;
+            this.duration = duration;
         }
     }
 

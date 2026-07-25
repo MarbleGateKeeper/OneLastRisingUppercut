@@ -1,12 +1,14 @@
 package dev.marblegate.olru.common.entity;
 
 import dev.marblegate.olru.common.core.GauntletEventHandlers;
+import dev.marblegate.olru.common.core.GauntletSoundHelper;
 import dev.marblegate.olru.common.registry.OLRUDamageTypes;
 import dev.marblegate.olru.common.registry.OLRUEntityTypes;
 import dev.marblegate.olru.common.util.GauntletHelper;
 import dev.marblegate.olru.config.OLRUConfig;
 import java.util.List;
 import java.util.UUID;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,6 +46,14 @@ public class BioticGrenade extends ThrowableItemProjectile {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (level().isClientSide()) {
+            level().addParticle(new DustParticleOptions(0x31E8FF, 0.7f), getX(), getY(), getZ(), 0.0, 0.0, 0.0);
+        }
+    }
+
+    @Override
     protected void onHit(HitResult result) {
         super.onHit(result);
         if (result.getType() == HitResult.Type.MISS) return;
@@ -55,6 +65,7 @@ public class BioticGrenade extends ThrowableItemProjectile {
 
     private void explode(ServerLevel level, Vec3 center) {
         var cfg = OLRUConfig.HORUS.BIOTIC_GRENADE;
+        GauntletSoundHelper.grenadeExplode(level, center);
         ServerPlayer owner = ownerPlayer(level);
         double radius = cfg.explosionRadius.get();
         AABB box = new AABB(

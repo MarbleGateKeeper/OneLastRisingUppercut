@@ -1,12 +1,15 @@
 package dev.marblegate.olru.common.item;
 
 import dev.marblegate.olru.common.OneLastRisingUppercut;
+import dev.marblegate.olru.common.animation.GauntletPoseType;
 import dev.marblegate.olru.common.attachment.GauntletSkillGroup;
 import dev.marblegate.olru.common.attachment.skill.ConditionalChargeState;
 import dev.marblegate.olru.common.attachment.skill.CooldownSkillState;
 import dev.marblegate.olru.common.attachment.skill.IncrementalChargeState;
 import dev.marblegate.olru.common.core.GauntletEffectBroadcaster;
 import dev.marblegate.olru.common.core.GauntletEventHandlers;
+import dev.marblegate.olru.common.core.GauntletParticleHelper;
+import dev.marblegate.olru.common.core.GauntletSoundHelper;
 import dev.marblegate.olru.common.core.movement.MovementManager;
 import dev.marblegate.olru.common.core.movement.MovementTaskAssignmentResult;
 import dev.marblegate.olru.common.core.movement.MovementTaskProperties;
@@ -73,7 +76,13 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
         if (level.isClientSide() || !(entity instanceof ServerPlayer player)) return;
         int ticksHeld = getUseDuration(stack, entity) - remainingUseDuration;
         float chargePercent = Math.min(1f, (float) ticksHeld / getMaxChargeTicks());
+        if (ticksHeld == 0) {
+            GauntletSoundHelper.rocketChargeStart(player.level(), player.position());
+        } else if (ticksHeld % 5 == 0) {
+            GauntletSoundHelper.rocketChargeTick(player.level(), player.position(), chargePercent);
+        }
         GauntletEffectBroadcaster.rocketCharge(player, chargePercent, 4);
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.ROCKET_PUNCH_CHARGE, chargePercent, 4);
     }
 
     @Override
@@ -81,6 +90,7 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
         boolean result = super.releaseUsing(stack, level, entity, timeCharged);
         if (!level.isClientSide() && entity instanceof ServerPlayer player) {
             GauntletEffectBroadcaster.stopRocketCharge(player);
+            GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.ROCKET_PUNCH_CHARGE);
         }
         return result;
     }
@@ -90,6 +100,7 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
         super.onStopUsing(stack, entity, count);
         if (!entity.level().isClientSide() && entity instanceof ServerPlayer player) {
             GauntletEffectBroadcaster.stopRocketCharge(player);
+            GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.ROCKET_PUNCH_CHARGE);
         }
     }
 
@@ -131,6 +142,10 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
             EntityPushTask task = new EntityPushTask(new Vec3(0, cfg.riseSpeedMob.get(), 0), cfg.riseHeight.get(), mob instanceof ServerPlayer);
             MovementManager.assign(mob, task, MovementTaskProperties.externalKnockback(player.getUUID()));
         }
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.RISING_UPPERCUT, 0, 12);
+        GauntletParticleHelper.uppercutLaunch(level, player.position());
+        GauntletEffectBroadcaster.uppercutBurst(level, player.position());
+        GauntletSoundHelper.risingUppercut(level, player.position());
         consumeSkill(player, SkillType.SKILL_TWO);
     }
 
@@ -209,6 +224,10 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
             target.hurt(src, dmg);
         }
         level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, pos.x, pos.y, pos.z, 3, 1.0, 0, 1.0, 0);
+        GauntletParticleHelper.meteorLandingExtras(level, pos);
+        GauntletEffectBroadcaster.meteorImpact(player, pos, (float) outer);
+        GauntletSoundHelper.meteorLand(level, pos);
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.METEOR_LAND, 0, 14);
     }
 
     @Override
@@ -222,11 +241,14 @@ public class LegacyPrimeGauntletItem extends AbstractGauntletItem {
 
         // Bullet trail fires regardless of whether a mob was hit
         GauntletEventHandlers.spawnBulletTrail(player, hitCenter, cfg.range.get(), cfg.particleCount.getAsInt());
+        GauntletParticleHelper.muzzleFlash(level, player.getEyePosition().add(player.getLookAngle().scale(0.6)), 0xFFA028);
+        GauntletSoundHelper.handCannon(level, player.position());
 
         if (hitOpt.isPresent()) {
             hitOpt.get().hurt(OLRUDamageTypes.legacyPrimeHandCannon(level, player), (float) cfg.damage.getAsDouble());
         }
 
+        GauntletEffectBroadcaster.pose(player, GauntletPoseType.PRIME_HAND_CANNON_RECOIL, 0, 6);
         consumeSkill(player, SkillType.NORMAL_ATTACK);
     }
 
