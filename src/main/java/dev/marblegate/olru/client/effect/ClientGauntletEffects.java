@@ -194,6 +194,10 @@ public class ClientGauntletEffects {
         return NANO_SURGE.containsKey(entityId);
     }
 
+    public static boolean isCoalescenceBeamActive(int entityId) {
+        return COALESCENCE_BEAMS.containsKey(entityId);
+    }
+
     public static NanoSurgeRenderData nanoSurgeRenderData(int entityId) {
         Timed effect = NANO_SURGE.get(entityId);
         if (effect == null) return null;

@@ -54,6 +54,12 @@ public class FinalAnswerGauntletItem extends AbstractGauntletItem {
     }
 
     @Override
+    public boolean isChargeProgressMeaningful() {
+        // Biotic Grasp is a no-cooldown channel; its charge percent carries no meaning.
+        return false;
+    }
+
+    @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
             Consumer<Component> tooltip, TooltipFlag flag) {
         GauntletTooltipHelper.appendFinalAnswer(tooltip, flag.hasShiftDown());

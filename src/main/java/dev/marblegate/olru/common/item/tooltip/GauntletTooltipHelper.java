@@ -26,67 +26,37 @@ public class GauntletTooltipHelper {
 
         appendHeader(tooltip, "tooltip.olru.legacy_prime.style", expanded);
         if (!expanded) return;
-        appendSkill(tooltip,
-                "LMB",
-                "skill.olru.legacy_prime.normal_attack",
-                PRIME_ACCENT,
+        appendSkill(tooltip, "LMB", "skill.olru.legacy_prime.normal_attack", PRIME_ACCENT,
                 Component.translatable("tooltip.olru.legacy_prime.normal_attack.mechanic"),
-                Component.translatable("tooltip.olru.legacy_prime.normal_attack.charge"),
-                null,
-                Component.translatable("tooltip.olru.legacy_prime.normal_attack.stats",
-                        handCannon.maxCharges.get(), seconds(handCannon.cooldownTicks.get()),
-                        blocks(handCannon.range.get()), number(handCannon.damage.get())));
-        appendSkill(tooltip,
-                "RMB",
-                "skill.olru.legacy_prime.skill_one",
-                PRIME_ACCENT,
+                Component.translatable("tooltip.olru.legacy_prime.normal_attack.info",
+                        handCannon.maxCharges.get(), sec(handCannon.cooldownTicks.get()),
+                        number(handCannon.range.get()), number(handCannon.damage.get())));
+        appendSkill(tooltip, "RMB", "skill.olru.legacy_prime.skill_one", PRIME_ACCENT,
                 Component.translatable("tooltip.olru.legacy_prime.skill_one.mechanic"),
-                Component.translatable("tooltip.olru.legacy_prime.skill_one.charge",
-                        seconds(rocketPunch.cooldownTicks.get())),
-                Component.translatable("tooltip.olru.legacy_prime.skill_one.charge_time",
-                        seconds(rocketPunch.maxChargeTicks.get())),
-                Component.translatable("tooltip.olru.legacy_prime.skill_one.stats",
-                        blocks(rocketPunch.maxLaunchDistance.get()), number(rocketPunch.maxLaunchSpeed.get()),
+                Component.translatable("tooltip.olru.legacy_prime.skill_one.info",
+                        sec(rocketPunch.cooldownTicks.get()), sec(rocketPunch.maxChargeTicks.get()),
+                        number(rocketPunch.maxLaunchDistance.get()),
                         number(rocketPunch.mobDamageMin.get()), number(rocketPunch.mobDamageMax.get()),
                         number(rocketPunch.wallBonusDamage.get())));
-        appendSkill(tooltip,
-                "Sft",
-                "skill.olru.legacy_prime.skill_two",
-                PRIME_ACCENT,
+        appendSkill(tooltip, "Sft", "skill.olru.legacy_prime.skill_two", PRIME_ACCENT,
                 Component.translatable("tooltip.olru.legacy_prime.skill_two.mechanic"),
-                Component.translatable("tooltip.olru.legacy_prime.skill_two.charge",
-                        seconds(risingUppercut.cooldownTicks.get())),
-                null,
-                Component.translatable("tooltip.olru.legacy_prime.skill_two.stats",
-                        blocks(risingUppercut.riseHeight.get()), number(risingUppercut.riseSpeedMob.get()),
-                        number(risingUppercut.mobDamage.get()), blocks(risingUppercut.frontConeRange.get()),
+                Component.translatable("tooltip.olru.legacy_prime.skill_two.info",
+                        sec(risingUppercut.cooldownTicks.get()), number(risingUppercut.riseHeight.get()),
+                        number(risingUppercut.mobDamage.get()), number(risingUppercut.frontConeRange.get()),
                         number(risingUppercut.frontConeAngleDegrees.get())));
-        appendSkill(tooltip,
-                "V",
-                "skill.olru.legacy_prime.skill_three",
-                PRIME_ACCENT,
+        appendSkill(tooltip, "V", "skill.olru.legacy_prime.skill_three", PRIME_ACCENT,
                 Component.translatable("tooltip.olru.legacy_prime.skill_three.mechanic"),
-                Component.translatable("tooltip.olru.legacy_prime.skill_three.charge",
-                        seconds(seismicSlam.cooldownTicks.get())),
-                null,
-                Component.translatable("tooltip.olru.legacy_prime.skill_three.stats",
-                        blocks(seismicSlam.impactRange.get()), number(seismicSlam.impactConeAngleDegrees.get()),
+                Component.translatable("tooltip.olru.legacy_prime.skill_three.info",
+                        sec(seismicSlam.cooldownTicks.get()), number(seismicSlam.impactRange.get()),
+                        number(seismicSlam.impactConeAngleDegrees.get()),
                         number(seismicSlam.minDamage.get()), number(seismicSlam.maxDamage.get()),
-                        seconds(seismicSlam.fullDamageAirTicks.get()), seconds(seismicSlam.slowTicks.get()),
-                        number(seismicSlam.leapForwardSpeed.get()), number(seismicSlam.leapUpSpeed.get())));
-        appendSkill(tooltip,
-                "X",
-                "skill.olru.legacy_prime.ultimate",
-                PRIME_ACCENT,
+                        sec(seismicSlam.slowTicks.get())));
+        appendSkill(tooltip, "X", "skill.olru.legacy_prime.ultimate", PRIME_ACCENT,
                 Component.translatable("tooltip.olru.legacy_prime.ultimate.mechanic"),
-                Component.translatable("tooltip.olru.legacy_prime.ultimate.charge",
-                        number(meteorStrike.chargePercentPerDamage.get())),
-                Component.translatable("tooltip.olru.legacy_prime.ultimate.hold_time",
-                        seconds(meteorStrike.hoverTicks.get())),
-                Component.translatable("tooltip.olru.legacy_prime.ultimate.stats",
-                        number(meteorStrike.fallSpeed.get()), blocks(meteorStrike.innerRadius.get()),
-                        blocks(meteorStrike.outerRadius.get()), number(meteorStrike.outerDamageMax.get()),
-                        number(meteorStrike.outerDamageMin.get())));
+                Component.translatable("tooltip.olru.legacy_prime.ultimate.info",
+                        number(meteorStrike.chargePercentPerDamage.get()), sec(meteorStrike.hoverTicks.get()),
+                        number(meteorStrike.innerRadius.get()), number(meteorStrike.outerRadius.get()),
+                        number(meteorStrike.outerDamageMax.get()), number(meteorStrike.outerDamageMin.get())));
     }
 
     public static void appendLegacyOfHorus(Consumer<Component> tooltip, boolean expanded) {
@@ -98,66 +68,36 @@ public class GauntletTooltipHelper {
 
         appendHeader(tooltip, "tooltip.olru.legacy_of_horus.style", expanded);
         if (!expanded) return;
-        appendSkill(tooltip,
-                "LMB",
-                "skill.olru.legacy_of_horus.normal_attack",
-                HORUS_ACCENT,
+        appendSkill(tooltip, "LMB", "skill.olru.legacy_of_horus.normal_attack", HORUS_ACCENT,
                 Component.translatable("tooltip.olru.legacy_of_horus.normal_attack.mechanic"),
-                Component.translatable("tooltip.olru.legacy_of_horus.normal_attack.charge"),
-                null,
-                Component.translatable("tooltip.olru.legacy_of_horus.normal_attack.stats",
-                        bioticRound.maxCharges.get(), seconds(bioticRound.cooldownTicks.get()),
-                        blocks(bioticRound.effectiveRange.get()), number(bioticRound.healAmount.get()),
+                Component.translatable("tooltip.olru.legacy_of_horus.normal_attack.info",
+                        bioticRound.maxCharges.get(), sec(bioticRound.cooldownTicks.get()),
+                        number(bioticRound.effectiveRange.get()), number(bioticRound.healAmount.get()),
                         number(bioticRound.damage.get())));
-        appendSkill(tooltip,
-                "RMB",
-                "skill.olru.legacy_of_horus.skill_one",
-                HORUS_ACCENT,
+        appendSkill(tooltip, "RMB", "skill.olru.legacy_of_horus.skill_one", HORUS_ACCENT,
                 Component.translatable("tooltip.olru.legacy_of_horus.skill_one.mechanic"),
-                Component.translatable("tooltip.olru.legacy_of_horus.skill_one.charge",
-                        seconds(fieldExtraction.cooldownTicks.get())),
-                Component.translatable("tooltip.olru.legacy_of_horus.skill_one.charge_time",
-                        seconds(fieldExtraction.maxChargeTicks.get())),
-                Component.translatable("tooltip.olru.legacy_of_horus.skill_one.stats",
-                        blocks(fieldExtraction.allyLockRange.get()), number(fieldExtraction.allyConeAngleDegrees.get()),
-                        number(fieldExtraction.pullSpeed.get()), blocks(fieldExtraction.selfDashDistance.get()),
-                        number(fieldExtraction.healAmount.get()), seconds(fieldExtraction.protectionTicks.get())));
-        appendSkill(tooltip,
-                "Sft",
-                "skill.olru.legacy_of_horus.skill_two",
-                HORUS_ACCENT,
+                Component.translatable("tooltip.olru.legacy_of_horus.skill_one.info",
+                        sec(fieldExtraction.cooldownTicks.get()), sec(fieldExtraction.maxChargeTicks.get()),
+                        number(fieldExtraction.allyLockRange.get()), number(fieldExtraction.healAmount.get()),
+                        number(fieldExtraction.selfDashDistance.get())));
+        appendSkill(tooltip, "Sft", "skill.olru.legacy_of_horus.skill_two", HORUS_ACCENT,
                 Component.translatable("tooltip.olru.legacy_of_horus.skill_two.mechanic"),
-                Component.translatable("tooltip.olru.legacy_of_horus.skill_two.charge",
-                        seconds(sedativeDart.cooldownTicks.get())),
-                null,
-                Component.translatable("tooltip.olru.legacy_of_horus.skill_two.stats",
-                        blocks(sedativeDart.range.get()), number(sedativeDart.damage.get()),
-                        seconds(sedativeDart.sleepTicks.get()), seconds(sedativeDart.bossSleepTicks.get()),
-                        number(sedativeDart.flyingDropSpeed.get())));
-        appendSkill(tooltip,
-                "V",
-                "skill.olru.legacy_of_horus.skill_three",
-                HORUS_ACCENT,
+                Component.translatable("tooltip.olru.legacy_of_horus.skill_two.info",
+                        sec(sedativeDart.cooldownTicks.get()), number(sedativeDart.range.get()),
+                        number(sedativeDart.damage.get()), sec(sedativeDart.sleepTicks.get()),
+                        sec(sedativeDart.bossSleepTicks.get())));
+        appendSkill(tooltip, "V", "skill.olru.legacy_of_horus.skill_three", HORUS_ACCENT,
                 Component.translatable("tooltip.olru.legacy_of_horus.skill_three.mechanic"),
-                Component.translatable("tooltip.olru.legacy_of_horus.skill_three.charge",
-                        seconds(bioticGrenade.cooldownTicks.get())),
-                null,
-                Component.translatable("tooltip.olru.legacy_of_horus.skill_three.stats",
-                        blocks(bioticGrenade.explosionRadius.get()), number(bioticGrenade.healAmount.get()),
-                        seconds(bioticGrenade.regenerationTicks.get()), number(bioticGrenade.damage.get()),
-                        number(bioticGrenade.throwSpeed.get())));
-        appendSkill(tooltip,
-                "X",
-                "skill.olru.legacy_of_horus.ultimate",
-                HORUS_ACCENT,
+                Component.translatable("tooltip.olru.legacy_of_horus.skill_three.info",
+                        sec(bioticGrenade.cooldownTicks.get()), number(bioticGrenade.explosionRadius.get()),
+                        number(bioticGrenade.healAmount.get()), sec(bioticGrenade.regenerationTicks.get()),
+                        number(bioticGrenade.damage.get())));
+        appendSkill(tooltip, "X", "skill.olru.legacy_of_horus.ultimate", HORUS_ACCENT,
                 Component.translatable("tooltip.olru.legacy_of_horus.ultimate.mechanic"),
-                Component.translatable("tooltip.olru.legacy_of_horus.ultimate.charge",
-                        number(nanoSurge.chargePercentPerDamage.get()), number(nanoSurge.chargePercentPerHealing.get())),
-                null,
-                Component.translatable("tooltip.olru.legacy_of_horus.ultimate.stats",
-                        blocks(nanoSurge.range.get()), seconds(nanoSurge.buffTicks.get()),
-                        number(nanoSurge.healAmount.get()), number(nanoSurge.emergencyHealAmount.get()),
-                        percent(nanoSurge.emergencyHealthFraction.get()), multiplier(nanoSurge.healingMultiplier.get())));
+                Component.translatable("tooltip.olru.legacy_of_horus.ultimate.info",
+                        number(nanoSurge.chargePercentPerDamage.get()), number(nanoSurge.chargePercentPerHealing.get()),
+                        number(nanoSurge.range.get()), sec(nanoSurge.buffTicks.get()),
+                        number(nanoSurge.healAmount.get()), number(nanoSurge.emergencyHealAmount.get())));
     }
 
     public static void appendFinalAnswer(Consumer<Component> tooltip, boolean expanded) {
@@ -169,63 +109,37 @@ public class GauntletTooltipHelper {
 
         appendHeader(tooltip, "tooltip.olru.final_answer.style", expanded);
         if (!expanded) return;
-        appendSkill(tooltip,
-                "LMB",
-                "skill.olru.final_answer.skill_one",
-                FINAL_ANSWER_ACCENT,
+        appendSkill(tooltip, "LMB", "skill.olru.final_answer.normal_attack", FINAL_ANSWER_ACCENT,
                 Component.translatable("tooltip.olru.final_answer.normal_attack.mechanic"),
-                Component.translatable("tooltip.olru.final_answer.normal_attack.charge",
-                        percent(bioticSpray.energyDrainPerTick.get() * 20.0)),
-                null,
-                Component.translatable("tooltip.olru.final_answer.normal_attack.stats",
-                        blocks(bioticSpray.range.get()), number(bioticSpray.coneAngleDegrees.get()),
-                        number(bioticSpray.healPerTick.get()), seconds(bioticSpray.lingerTicks.get())));
-        appendSkill(tooltip,
-                "RMB",
-                "skill.olru.final_answer.normal_attack",
-                FINAL_ANSWER_ACCENT,
+                Component.translatable("tooltip.olru.final_answer.normal_attack.info",
+                        percent(bioticSpray.energyDrainPerTick.get() * 20.0),
+                        number(bioticSpray.range.get()), number(bioticSpray.coneAngleDegrees.get()),
+                        number(bioticSpray.healPerTick.get() * bioticSpray.pulseIntervalTicks.get()),
+                        sec(bioticSpray.lingerTicks.get())));
+        appendSkill(tooltip, "RMB", "skill.olru.final_answer.skill_one", FINAL_ANSWER_ACCENT,
                 Component.translatable("tooltip.olru.final_answer.skill_one.mechanic"),
-                Component.translatable("tooltip.olru.final_answer.skill_one.charge"),
-                null,
-                Component.translatable("tooltip.olru.final_answer.skill_one.stats",
-                        blocks(bioticGrasp.range.get()), number(bioticGrasp.coneAngleDegrees.get()),
+                Component.translatable("tooltip.olru.final_answer.skill_one.info",
+                        number(bioticGrasp.range.get()), number(bioticGrasp.coneAngleDegrees.get()),
                         number(bioticGrasp.damage.get()), number(bioticGrasp.selfHeal.get()),
                         percent(bioticGrasp.energyPerHit.get())));
-        appendSkill(tooltip,
-                "Sft",
-                "skill.olru.final_answer.skill_two",
-                FINAL_ANSWER_ACCENT,
+        appendSkill(tooltip, "Sft", "skill.olru.final_answer.skill_two", FINAL_ANSWER_ACCENT,
                 Component.translatable("tooltip.olru.final_answer.skill_two.mechanic"),
-                Component.translatable("tooltip.olru.final_answer.skill_two.charge",
-                        seconds(fade.cooldownTicks.get())),
-                null,
-                Component.translatable("tooltip.olru.final_answer.skill_two.stats",
-                        seconds(fade.durationTicks.get()), number(fade.speedAmplifier.get()),
-                        number(fade.jumpBoostAmplifier.get())));
-        appendSkill(tooltip,
-                "V",
-                "skill.olru.final_answer.skill_three",
-                FINAL_ANSWER_ACCENT,
+                Component.translatable("tooltip.olru.final_answer.skill_two.info",
+                        sec(fade.cooldownTicks.get()), sec(fade.durationTicks.get()),
+                        number(fade.speedAmplifier.get()), number(fade.jumpBoostAmplifier.get())));
+        appendSkill(tooltip, "V", "skill.olru.final_answer.skill_three", FINAL_ANSWER_ACCENT,
                 Component.translatable("tooltip.olru.final_answer.skill_three.mechanic"),
-                Component.translatable("tooltip.olru.final_answer.skill_three.charge",
-                        seconds(bioticOrb.cooldownTicks.get())),
-                null,
-                Component.translatable("tooltip.olru.final_answer.skill_three.stats",
-                        blocks(bioticOrb.radius.get()), number(bioticOrb.damagePerPulse.get()),
-                        number(bioticOrb.damagePool.get()), seconds(bioticOrb.lifeTicks.get())));
-        appendSkill(tooltip,
-                "X",
-                "skill.olru.final_answer.ultimate",
-                FINAL_ANSWER_ACCENT,
+                Component.translatable("tooltip.olru.final_answer.skill_three.info",
+                        sec(bioticOrb.cooldownTicks.get()), number(bioticOrb.radius.get()),
+                        number(bioticOrb.damagePerPulse.get()), number(bioticOrb.damagePool.get()),
+                        sec(bioticOrb.lifeTicks.get())));
+        appendSkill(tooltip, "X", "skill.olru.final_answer.ultimate", FINAL_ANSWER_ACCENT,
                 Component.translatable("tooltip.olru.final_answer.ultimate.mechanic"),
-                Component.translatable("tooltip.olru.final_answer.ultimate.charge",
-                        number(coalescence.chargePercentPerDamage.get()),
-                        number(bioticSpray.ultChargePercentPerHeal.get())),
-                null,
-                Component.translatable("tooltip.olru.final_answer.ultimate.stats",
-                        blocks(coalescence.length.get()), seconds(coalescence.durationTicks.get()),
-                        number(coalescence.enemyDamagePerPulse.get()), number(coalescence.allyHealPerPulse.get()),
-                        number(coalescence.selfHealPerPulse.get())));
+                Component.translatable("tooltip.olru.final_answer.ultimate.info",
+                        number(coalescence.chargePercentPerDamage.get()), number(bioticSpray.ultChargePercentPerHeal.get()),
+                        number(coalescence.length.get()), sec(coalescence.durationTicks.get()),
+                        number(coalescence.enemyDamagePerPulse.get()),
+                        number(coalescence.allyHealPerPulse.get()), number(coalescence.selfHealPerPulse.get())));
     }
 
     private static void appendHeader(Consumer<Component> tooltip, String styleKey, boolean expanded) {
@@ -239,56 +153,30 @@ public class GauntletTooltipHelper {
                     .append(Component.translatable("tooltip.olru.gauntlet.hold_shift")
                             .withStyle(BODY)));
         }
-        if (expanded) {
-            tooltip.accept(Component.literal("  =================").withStyle(MUTED));
-        }
     }
 
-    private static void appendSkill(Consumer<Component> tooltip, String keyLabel, String skillNameKey, ChatFormatting accent,
-            Component summary, Component chargeType, Component duration, Component keyStats) {
-        tooltip.accept(Component.literal("  ----------------").withStyle(MUTED));
-        tooltip.accept(Component.literal("  [").withStyle(MUTED)
+    private static void appendSkill(Consumer<Component> tooltip, String keyLabel, String skillNameKey,
+            ChatFormatting accent, Component mechanic, Component info) {
+        tooltip.accept(CommonComponents.EMPTY);
+        tooltip.accept(bar(accent)
+                .append(Component.literal("[").withStyle(MUTED))
                 .append(Component.literal(keyLabel).withStyle(KEY, ChatFormatting.BOLD))
                 .append(Component.literal("] ").withStyle(MUTED))
                 .append(Component.translatable(skillNameKey).withStyle(accent, ChatFormatting.BOLD)));
-        tooltip.accept(Component.literal("   ").append(summary).withStyle(BODY));
-        MutableComponent timing = labeledInline("tooltip.olru.gauntlet.charge_type", chargeType);
-        if (duration != null) {
-            timing.append(Component.literal("  |  ").withStyle(MUTED))
-                    .append(labeledInline("tooltip.olru.gauntlet.duration", duration));
-        }
-        tooltip.accept(timing);
-        tooltip.accept(labeled("tooltip.olru.gauntlet.key_stats", keyStats));
+        tooltip.accept(bar(accent).append(mechanic).withStyle(BODY));
+        tooltip.accept(bar(accent).append(info).withStyle(BODY));
     }
 
-    private static Component labeled(String labelKey, Component value) {
-        return Component.literal("   ")
-                .append(Component.translatable(labelKey).withStyle(LABEL, ChatFormatting.BOLD))
-                .append(Component.literal(": ").withStyle(MUTED))
-                .append(value.copy().withStyle(BODY));
+    private static MutableComponent bar(ChatFormatting accent) {
+        return Component.literal("▎").withStyle(accent);
     }
 
-    private static MutableComponent labeledInline(String labelKey, Component value) {
-        return Component.literal("   ")
-                .append(Component.translatable(labelKey).withStyle(LABEL))
-                .append(Component.literal(": ").withStyle(MUTED))
-                .append(value.copy().withStyle(BODY));
-    }
-
-    private static String seconds(int ticks) {
-        return number(ticks / 20.0) + "s";
-    }
-
-    private static String blocks(double blocks) {
-        return number(blocks);
+    private static String sec(int ticks) {
+        return number(ticks / 20.0);
     }
 
     private static String percent(double fraction) {
         return number(fraction * 100.0) + "%";
-    }
-
-    private static String multiplier(double value) {
-        return "x" + number(value);
     }
 
     private static String number(double value) {

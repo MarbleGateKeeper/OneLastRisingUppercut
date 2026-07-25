@@ -106,6 +106,11 @@ public abstract class AbstractGauntletItem extends Item {
         return false;
     }
 
+    /** Whether the channel charge fraction is meaningful for HUD display (false for no-cooldown channels). */
+    public boolean isChargeProgressMeaningful() {
+        return true;
+    }
+
     public GauntletSkillGroup getSkillGroup(Player player) {
         GauntletEntityState state = player.getData(OLRUAttachments.GAUNTLET_STATE.get());
         GroupAccess access = state.getOrCreate(gauntletId(), this::createDefaultSkillGroup);
