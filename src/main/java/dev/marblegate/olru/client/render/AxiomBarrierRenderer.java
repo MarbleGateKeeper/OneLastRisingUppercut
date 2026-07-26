@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -65,7 +66,7 @@ public class AxiomBarrierRenderer extends EntityRenderer<AxiomBarrierEntity, Axi
         float halfHeight = (float) cfg.height.getAsDouble() * 0.5f;
         TextureAtlasSprite glass = Minecraft.getInstance()
                 .getAtlasManager()
-                .getAtlasOrThrow(TextureAtlas.LOCATION_BLOCKS)
+                .getAtlasOrThrow(AtlasIds.BLOCKS)
                 .getSprite(GLASS_SPRITE);
         poseStack.pushPose();
         poseStack.translate(0.0, state.boundingBoxHeight * 0.5, 0.0);

@@ -19,7 +19,6 @@ import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -232,10 +231,13 @@ public class AxiomEffectTracker {
             }
             case AIMING -> {
                 // Hover lock: pinned in place, free to aim the zone with the mouse.
-                player.setNoGravity(true);
-                player.setDeltaMovement(Vec3.ZERO);
-                player.hurtMarked = true;
-                player.resetFallDistance();
+                // Skipped while the rise push is still flying so it is not wiped out.
+                if (!MovementManager.hasTask(player)) {
+                    player.setNoGravity(true);
+                    player.setDeltaMovement(Vec3.ZERO);
+                    player.hurtMarked = true;
+                    player.resetFallDistance();
+                }
                 GauntletEffectBroadcaster.graviticZone(
                         player, groundProjection(player), (float) cfg.zoneRadius.getAsDouble(), 4);
                 if (--state.ticksRemaining <= 0) {
@@ -243,6 +245,7 @@ public class AxiomEffectTracker {
                 }
             }
             case LIFT -> tickFluxLift(player, state, cfg);
+            case FALLING -> tickFluxFalling(player, state, cfg);
         }
     }
 
@@ -283,8 +286,10 @@ public class AxiomEffectTracker {
             if (!(level.getEntity(targetId) instanceof LivingEntity target) || !target.isAlive()) continue;
             if (lastTick) {
                 target.setNoGravity(false);
-            } else {
+                target.resetFallDistance(); // the slam is the damage, not the fall
+            } else if (!MovementManager.hasTask(target)) {
                 // Suspension lock, re-asserted every tick so nothing escapes the lift.
+                // Skipped while the lift push is still flying the target upward.
                 target.setNoGravity(true);
                 target.setDeltaMovement(Vec3.ZERO);
                 target.hurtMarked = true;
@@ -292,23 +297,52 @@ public class AxiomEffectTracker {
             }
         }
         if (lastTick) {
-            slamFluxTargets(player, state, cfg);
+            // Released: targets now fall naturally and are slammed individually on touchdown.
+            state.phase = FluxPhase.FALLING;
+            state.ticksRemaining = cfg.fallTimeoutTicks.get();
+            if (state.liftedTargets.isEmpty()) {
+                fireSlamEffects(player, state, cfg);
+                endFlux(player, state);
+            }
+        }
+    }
+
+    private static void tickFluxFalling(ServerPlayer player, FluxState state, GraviticFluxConfig cfg) {
+        ServerLevel level = player.level();
+        boolean timedOut = --state.ticksRemaining <= 0;
+        for (UUID targetId : List.copyOf(state.liftedTargets)) {
+            if (!(level.getEntity(targetId) instanceof LivingEntity target)) {
+                state.liftedTargets.remove(targetId);
+                continue;
+            }
+            if (!target.isAlive()) {
+                state.liftedTargets.remove(targetId);
+                continue;
+            }
+            if (target.onGround() || timedOut) {
+                slamTarget(player, target, cfg);
+                fireSlamEffects(player, state, cfg);
+                state.liftedTargets.remove(targetId);
+            }
+        }
+        if (state.liftedTargets.isEmpty()) {
             endFlux(player, state);
         }
     }
 
-    /** Slams the recorded lift list: only enemies actually lifted are hit, no radius re-check. */
-    private static void slamFluxTargets(ServerPlayer player, FluxState state, GraviticFluxConfig cfg) {
+    private static void slamTarget(ServerPlayer player, LivingEntity target, GraviticFluxConfig cfg) {
+        float damage = (float) Math.min(
+                target.getMaxHealth() * cfg.slamMaxHealthFraction.get(), cfg.slamDamageCap.get());
+        target.hurt(OLRUDamageTypes.axiomGraviticFlux(player.level(), player), damage);
+        target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, cfg.slowTicks.get(), 1, false, false, false));
+    }
+
+    /** One-time ground-impact spectacle, fired when the first target lands (or immediately when nothing was lifted). */
+    private static void fireSlamEffects(ServerPlayer player, FluxState state, GraviticFluxConfig cfg) {
+        if (state.slamEffectsFired) return;
+        state.slamEffectsFired = true;
         ServerLevel level = player.level();
         Vec3 center = state.zoneCenter != null ? state.zoneCenter : player.position();
-        DamageSource source = OLRUDamageTypes.axiomGraviticFlux(level, player);
-        for (UUID targetId : state.liftedTargets) {
-            if (!(level.getEntity(targetId) instanceof LivingEntity target) || !target.isAlive()) continue;
-            float damage = (float) Math.min(
-                    target.getMaxHealth() * cfg.slamMaxHealthFraction.get(), cfg.slamDamageCap.get());
-            target.hurt(source, damage);
-            target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, cfg.slowTicks.get(), 1, false, false, false));
-        }
         GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.FLUX_CHANNEL);
         GauntletEffectBroadcaster.pose(player, GauntletPoseType.FLUX_SLAM, 0, 20);
         GauntletEffectBroadcaster.seismicSlamRing(level, center, (float) cfg.zoneRadius.getAsDouble());
@@ -326,7 +360,7 @@ public class AxiomEffectTracker {
     }
 
     private static void releaseFluxTargets(ServerLevel level, FluxState state) {
-        for (UUID targetId : state.liftedTargets) {
+        for (UUID targetId : List.copyOf(state.liftedTargets)) {
             if (level.getEntity(targetId) instanceof LivingEntity target) {
                 target.setNoGravity(false);
             }
@@ -425,7 +459,8 @@ public class AxiomEffectTracker {
     private enum FluxPhase {
         RISING,
         AIMING,
-        LIFT
+        LIFT,
+        FALLING
     }
 
     private static class FluxState {
@@ -434,6 +469,7 @@ public class AxiomEffectTracker {
         @Nullable
         Vec3 zoneCenter;
         final List<UUID> liftedTargets = new ArrayList<>();
+        boolean slamEffectsFired;
 
         FluxState(FluxPhase phase, int ticksRemaining) {
             this.phase = phase;

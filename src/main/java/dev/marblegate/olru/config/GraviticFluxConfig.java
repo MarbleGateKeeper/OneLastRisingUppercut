@@ -12,6 +12,7 @@ public class GraviticFluxConfig {
     public final ModConfigSpec.DoubleValue slamMaxHealthFraction;
     public final ModConfigSpec.DoubleValue slamDamageCap;
     public final ModConfigSpec.IntValue slowTicks;
+    public final ModConfigSpec.IntValue fallTimeoutTicks;
     public final ModConfigSpec.DoubleValue chargePercentPerDamage;
 
     GraviticFluxConfig(ModConfigSpec.Builder builder) {
@@ -42,6 +43,9 @@ public class GraviticFluxConfig {
         slowTicks = builder
                 .comment("Duration in ticks slammed targets are slowed afterwards")
                 .defineInRange("slowTicks", 60, 0, 600);
+        fallTimeoutTicks = builder
+                .comment("Max ticks a released target may fall before the slam resolves anyway")
+                .defineInRange("fallTimeoutTicks", 60, 0, 400);
         chargePercentPerDamage = builder
                 .comment("Ultimate charge percent gained per point of damage dealt")
                 .defineInRange("chargePercentPerDamage", 0.35, 0.0, 100.0);
