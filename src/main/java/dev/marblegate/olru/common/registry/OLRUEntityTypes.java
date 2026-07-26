@@ -1,8 +1,11 @@
 package dev.marblegate.olru.common.registry;
 
 import dev.marblegate.olru.common.OneLastRisingUppercut;
+import dev.marblegate.olru.common.entity.AccretionBoulderEntity;
+import dev.marblegate.olru.common.entity.AxiomBarrierEntity;
 import dev.marblegate.olru.common.entity.BioticGrenade;
 import dev.marblegate.olru.common.entity.BioticOrbEntity;
+import dev.marblegate.olru.common.entity.HypersphereEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -32,4 +35,33 @@ public class OLRUEntityTypes {
             .build(ResourceKey.create(
                     Registries.ENTITY_TYPE,
                     Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "biotic_orb"))));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<HypersphereEntity>> HYPERSPHERE = ENTITY_TYPES.register("hypersphere", () -> EntityType.Builder
+            .<HypersphereEntity>of(HypersphereEntity::new, MobCategory.MISC)
+            .sized(0.5F, 0.5F)
+            .clientTrackingRange(64)
+            .updateInterval(1)
+            .build(ResourceKey.create(
+                    Registries.ENTITY_TYPE,
+                    Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "hypersphere"))));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<AccretionBoulderEntity>> ACCRETION_BOULDER = ENTITY_TYPES.register("accretion_boulder", () -> EntityType.Builder
+            .<AccretionBoulderEntity>of(AccretionBoulderEntity::new, MobCategory.MISC)
+            .sized(0.9F, 0.9F)
+            .clientTrackingRange(64)
+            .updateInterval(1)
+            .build(ResourceKey.create(
+                    Registries.ENTITY_TYPE,
+                    Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "accretion_boulder"))));
+
+    // Entity sizes are static, so the barrier footprint is hardcoded to the config defaults
+    // (4.0 x 2.5); gameplay logic reads the live config values instead.
+    public static final DeferredHolder<EntityType<?>, EntityType<AxiomBarrierEntity>> AXIOM_BARRIER = ENTITY_TYPES.register("axiom_barrier", () -> EntityType.Builder
+            .<AxiomBarrierEntity>of(AxiomBarrierEntity::new, MobCategory.MISC)
+            .sized(4.0F, 2.5F)
+            .clientTrackingRange(64)
+            .updateInterval(1)
+            .build(ResourceKey.create(
+                    Registries.ENTITY_TYPE,
+                    Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "axiom_barrier"))));
 }

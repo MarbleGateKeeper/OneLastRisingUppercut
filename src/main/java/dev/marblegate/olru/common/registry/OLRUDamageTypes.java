@@ -23,6 +23,10 @@ public class OLRUDamageTypes {
     public static final ResourceKey<DamageType> FINAL_ANSWER_BIOTIC_GRASP = key("final_answer_biotic_grasp");
     public static final ResourceKey<DamageType> FINAL_ANSWER_BIOTIC_ORB = key("final_answer_biotic_orb");
     public static final ResourceKey<DamageType> FINAL_ANSWER_COALESCENCE = key("final_answer_coalescence");
+    public static final ResourceKey<DamageType> AXIOM_HYPERSPHERES = key("axiom_hyperspheres");
+    public static final ResourceKey<DamageType> AXIOM_HYPERSPHERE_IMPLOSION = key("axiom_hypersphere_implosion");
+    public static final ResourceKey<DamageType> AXIOM_ACCRETION = key("axiom_accretion");
+    public static final ResourceKey<DamageType> AXIOM_GRAVITIC_FLUX = key("axiom_gravitic_flux");
 
     private static ResourceKey<DamageType> key(String path) {
         return ResourceKey.create(
@@ -72,6 +76,22 @@ public class OLRUDamageTypes {
 
     public static DamageSource finalAnswerCoalescence(ServerLevel level, @Nullable ServerPlayer player) {
         return source(level, FINAL_ANSWER_COALESCENCE, player);
+    }
+
+    public static DamageSource axiomHyperspheres(ServerLevel level, @Nullable ServerPlayer player) {
+        return source(level, AXIOM_HYPERSPHERES, player);
+    }
+
+    public static DamageSource axiomHypersphereImplosion(ServerLevel level, @Nullable ServerPlayer player) {
+        return source(level, AXIOM_HYPERSPHERE_IMPLOSION, player);
+    }
+
+    public static DamageSource axiomAccretion(ServerLevel level, @Nullable ServerPlayer player) {
+        return source(level, AXIOM_ACCRETION, player);
+    }
+
+    public static DamageSource axiomGraviticFlux(ServerLevel level, @Nullable ServerPlayer player) {
+        return source(level, AXIOM_GRAVITIC_FLUX, player);
     }
 
     public static DamageSource source(

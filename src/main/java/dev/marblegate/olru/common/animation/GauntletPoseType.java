@@ -26,7 +26,13 @@ public enum GauntletPoseType {
     SPRAY_CHANNEL(18),
     FADE(19),
     ORB_THROW(20),
-    COALESCENCE_CHANNEL(21);
+    COALESCENCE_CHANNEL(21),
+    HYPERSPHERES_FIRE(22),
+    BARRIER_CHANNEL(23),
+    KINETIC_GRASP(24),
+    ACCRETION_THROW(25),
+    FLUX_CHANNEL(26),
+    FLUX_SLAM(27);
 
     private final byte networkId;
 

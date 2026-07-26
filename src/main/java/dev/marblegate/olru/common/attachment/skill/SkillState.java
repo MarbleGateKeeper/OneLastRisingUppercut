@@ -35,6 +35,7 @@ public interface SkillState {
                     case INCREMENTAL_CHARGE -> IncrementalChargeState.decodeNetwork(buf);
                     case FULL_CHARGE -> FullChargeState.decodeNetwork(buf);
                     case CONDITIONAL -> ConditionalChargeState.decodeNetwork(buf);
+                    case RESOURCE_COOLDOWN -> ResourceCooldownState.decodeNetwork(buf);
                 };
             });
 }

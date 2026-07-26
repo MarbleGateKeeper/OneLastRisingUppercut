@@ -21,6 +21,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -39,12 +40,14 @@ import org.joml.Matrix4fc;
 public class ClientGauntletEffects {
     private static final Map<Integer, TimedFloat> ROCKET_CHARGES = new HashMap<>();
     private static final Map<Integer, MeteorTarget> METEOR_TARGETS = new HashMap<>();
+    private static final Map<Integer, GraviticZone> GRAVITIC_ZONES = new HashMap<>();
     private static final Map<Long, TimedPair> EXTRACTION_BEAMS = new HashMap<>();
     private static final Map<Long, TimedOrbTether> ORB_TETHERS = new HashMap<>();
     private static final Map<Integer, Timed> SEDATED = new HashMap<>();
     private static final Map<Integer, Timed> NANO_SURGE = new HashMap<>();
     private static final Map<Integer, Timed> COALESCENCE_BEAMS = new HashMap<>();
     private static final Map<Integer, Timed> FADING = new HashMap<>();
+    private static final Map<Integer, Timed> KINETIC_GRASP_FIELDS = new HashMap<>();
     private static final List<OneShot> ONE_SHOTS = new ArrayList<>();
 
     public static final RenderType GAUNTLET_GLOW = RenderType.create(
@@ -59,6 +62,11 @@ public class ClientGauntletEffects {
     private static final int METEOR_BLOCK_SCAN_VERTICAL_ABOVE = 4;
     private static final int METEOR_SURFACE_REBUILD_INTERVAL_TICKS = 5;
     private static final double IMPACT_SHAKE_RANGE = 12.0;
+    private static final double GRASP_SLAB_DISTANCE = 1.8;
+    private static final float GRASP_SLAB_SIZE = 2.4f;
+    private static final int GRASP_SLAB_CELLS = 3;
+    /** Slow in-plane spin of the Kinetic Grasp starfield slab: 9 degrees per second. */
+    private static final double GRASP_SLAB_SPIN_PER_TICK = Math.toRadians(9.0 / 20.0);
 
     private static int clientTicks = 0;
 
@@ -71,6 +79,10 @@ public class ClientGauntletEffects {
             case METEOR_TARGET -> putOrRemove(
                     METEOR_TARGETS, payload.sourceEntityId(),
                     new MeteorTarget(payload.durationTicks(), payload.position(), payload.primaryValue(), payload.secondaryValue()),
+                    payload.active());
+            case GRAVITIC_ZONE -> putOrRemove(
+                    GRAVITIC_ZONES, payload.sourceEntityId(),
+                    new GraviticZone(payload.durationTicks(), payload.position(), payload.primaryValue()),
                     payload.active());
             case FIELD_EXTRACTION_BEAM -> putOrRemove(
                     EXTRACTION_BEAMS, pairKey(payload.sourceEntityId(), payload.targetEntityId()),
@@ -94,6 +106,10 @@ public class ClientGauntletEffects {
                     payload.active());
             case FADE -> putOrRemove(
                     FADING, payload.sourceEntityId(),
+                    new Timed(payload.durationTicks()),
+                    payload.active());
+            case KINETIC_GRASP_FIELD -> putOrRemove(
+                    KINETIC_GRASP_FIELDS, payload.sourceEntityId(),
                     new Timed(payload.durationTicks()),
                     payload.active());
             case ROCKET_PUNCH_IMPACT -> {
@@ -124,12 +140,14 @@ public class ClientGauntletEffects {
         clientTicks++;
         tickMap(ROCKET_CHARGES);
         tickMap(METEOR_TARGETS);
+        tickMap(GRAVITIC_ZONES);
         tickMap(EXTRACTION_BEAMS);
         tickMap(ORB_TETHERS);
         tickMap(SEDATED);
         tickMap(NANO_SURGE);
         tickMap(COALESCENCE_BEAMS);
         tickMap(FADING);
+        tickMap(KINETIC_GRASP_FIELDS);
         ONE_SHOTS.removeIf(shot -> clientTicks - shot.startTick >= shot.duration);
 
         SEDATED.keySet().forEach(id -> renderSleepZ(level, id));
@@ -142,10 +160,12 @@ public class ClientGauntletEffects {
         if (level == null) return;
         if (ROCKET_CHARGES.isEmpty()
                 && METEOR_TARGETS.isEmpty()
+                && GRAVITIC_ZONES.isEmpty()
                 && EXTRACTION_BEAMS.isEmpty()
                 && ORB_TETHERS.isEmpty()
                 && NANO_SURGE.isEmpty()
                 && COALESCENCE_BEAMS.isEmpty()
+                && KINETIC_GRASP_FIELDS.isEmpty()
                 && ONE_SHOTS.isEmpty())
             return;
 
@@ -161,15 +181,23 @@ public class ClientGauntletEffects {
 
             ROCKET_CHARGES.forEach((id, effect) -> renderRocketCharge(level, drawState, id, effect.value));
             METEOR_TARGETS.values().forEach(effect -> renderMeteorTarget(level, drawState, effect));
+            GRAVITIC_ZONES.values().forEach(effect -> renderGraviticZone(drawState, effect));
             EXTRACTION_BEAMS.values().forEach(effect -> renderExtractionBeam(level, drawState, effect.sourceId, effect.targetId));
             ORB_TETHERS.values().forEach(effect -> renderOrbTether(level, drawState, effect));
             NANO_SURGE.keySet().forEach(id -> renderNanoSurge(level, drawState, id));
             COALESCENCE_BEAMS.keySet().forEach(id -> renderCoalescenceBeam(level, drawState, id));
+            KINETIC_GRASP_FIELDS.keySet().forEach(id -> renderKineticGraspFrame(level, drawState, id));
             ONE_SHOTS.forEach(shot -> renderOneShot(drawState, shot));
 
             MeshData mesh = buffer.build();
             if (drawState.hasVertices && mesh != null) {
                 GAUNTLET_GLOW.draw(mesh);
+            }
+
+            // The starfield slab is a textured render type, so it gets its own buffer and draw;
+            // the GAUNTLET_GLOW mesh above is position+color only.
+            if (!KINETIC_GRASP_FIELDS.isEmpty()) {
+                renderKineticGraspStarfields(level, poseStack.last().pose());
             }
         } finally {
             poseStack.popPose();
@@ -213,12 +241,14 @@ public class ClientGauntletEffects {
     private static void clear() {
         ROCKET_CHARGES.clear();
         METEOR_TARGETS.clear();
+        GRAVITIC_ZONES.clear();
         EXTRACTION_BEAMS.clear();
         ORB_TETHERS.clear();
         SEDATED.clear();
         NANO_SURGE.clear();
         COALESCENCE_BEAMS.clear();
         FADING.clear();
+        KINETIC_GRASP_FIELDS.clear();
         ONE_SHOTS.clear();
     }
 
@@ -443,6 +473,90 @@ public class ClientGauntletEffects {
         addBillboard(draw, origin.add(direction.scale(0.3)), 0.45f, 0xB04AD8, 0.3f, true);
     }
 
+    /**
+     * The Kinetic Grasp absorb field: a faint purple edge frame around the starfield slab (the
+     * slab itself is drawn by {@link #renderKineticGraspStarfields}).
+     */
+    private static void renderKineticGraspFrame(ClientLevel level, DrawState draw, int entityId) {
+        Entity entity = level.getEntity(entityId);
+        if (entity == null) return;
+        GraspSlab slab = graspSlab(entity);
+        float half = GRASP_SLAB_SIZE * 0.5f;
+        Vec3 c00 = slab.corner(-half, -half);
+        Vec3 c10 = slab.corner(half, -half);
+        Vec3 c11 = slab.corner(half, half);
+        Vec3 c01 = slab.corner(-half, half);
+        double pulse = 0.6 + 0.4 * Math.sin(clientTicks * 0.3);
+        float alpha = (float) (0.5 * pulse);
+        addBeamSegment(draw, c00, c10, 0.05f, 0x9B4DFF, alpha);
+        addBeamSegment(draw, c10, c11, 0.05f, 0x9B4DFF, alpha);
+        addBeamSegment(draw, c11, c01, 0.05f, 0x9B4DFF, alpha);
+        addBeamSegment(draw, c01, c00, 0.05f, 0x9B4DFF, alpha);
+    }
+
+    /** Draws every active Kinetic Grasp starfield slab with the vanilla end-portal render type. */
+    private static void renderKineticGraspStarfields(ClientLevel level, Matrix4fc matrix) {
+        RenderType endPortal = RenderTypes.endPortal();
+        try (ByteBufferBuilder starBytes = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE)) {
+            BufferBuilder starfield = new BufferBuilder(starBytes, endPortal.mode(), endPortal.format());
+            boolean hasVertices = false;
+            for (int entityId : KINETIC_GRASP_FIELDS.keySet()) {
+                Entity entity = level.getEntity(entityId);
+                if (entity == null) continue;
+                GraspSlab slab = graspSlab(entity);
+                float cell = GRASP_SLAB_SIZE / GRASP_SLAB_CELLS;
+                for (int row = 0; row < GRASP_SLAB_CELLS; row++) {
+                    for (int col = 0; col < GRASP_SLAB_CELLS; col++) {
+                        float x0 = (col - GRASP_SLAB_CELLS * 0.5f) * cell;
+                        float y0 = (row - GRASP_SLAB_CELLS * 0.5f) * cell;
+                        addStarfieldQuad(starfield, matrix, slab, x0, y0, x0 + cell, y0 + cell);
+                        hasVertices = true;
+                    }
+                }
+            }
+            MeshData mesh = starfield.build();
+            if (hasVertices && mesh != null) {
+                endPortal.draw(mesh);
+            }
+        }
+    }
+
+    /** The end-portal pipeline is culled, so each cell is emitted in both windings. */
+    private static void addStarfieldQuad(BufferBuilder buffer, Matrix4fc matrix, GraspSlab slab, float x0, float y0, float x1, float y1) {
+        addStarfieldVertex(buffer, matrix, slab.corner(x0, y0));
+        addStarfieldVertex(buffer, matrix, slab.corner(x0, y1));
+        addStarfieldVertex(buffer, matrix, slab.corner(x1, y1));
+        addStarfieldVertex(buffer, matrix, slab.corner(x1, y0));
+        addStarfieldVertex(buffer, matrix, slab.corner(x1, y0));
+        addStarfieldVertex(buffer, matrix, slab.corner(x1, y1));
+        addStarfieldVertex(buffer, matrix, slab.corner(x0, y1));
+        addStarfieldVertex(buffer, matrix, slab.corner(x0, y0));
+    }
+
+    private static void addStarfieldVertex(BufferBuilder buffer, Matrix4fc matrix, Vec3 pos) {
+        buffer.addVertex(matrix, (float) pos.x, (float) pos.y, (float) pos.z);
+    }
+
+    /** Slab geometry: centered in front of the caster's eyes, perpendicular to the look, slowly spinning. */
+    private static GraspSlab graspSlab(Entity entity) {
+        Vec3 look = entity.getLookAngle().normalize();
+        if (look.lengthSqr() < 1.0E-6) look = new Vec3(0, 0, 1);
+        Vec3 center = entity.getEyePosition().add(look.scale(GRASP_SLAB_DISTANCE));
+        Vec3 right = look.cross(UP).normalize();
+        if (right.lengthSqr() < 1.0E-6) right = new Vec3(1, 0, 0);
+        Vec3 up = right.cross(look).normalize();
+        double angle = clientTicks * GRASP_SLAB_SPIN_PER_TICK + entity.getId() * 0.7;
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        return new GraspSlab(center, right.scale(cos).add(up.scale(sin)), up.scale(cos).subtract(right.scale(sin)));
+    }
+
+    private record GraspSlab(Vec3 center, Vec3 right, Vec3 up) {
+        Vec3 corner(float x, float y) {
+            return center.add(right.scale(x)).add(up.scale(y));
+        }
+    }
+
     private static void renderOneShot(DrawState draw, OneShot shot) {
         float progress = Math.clamp((float) (clientTicks - shot.startTick) / shot.duration, 0f, 1f);
         switch (shot.type) {
@@ -577,6 +691,23 @@ public class ClientGauntletEffects {
         addHorizontalRing(draw, center.add(0, 0.08, 0), outer, 0.12f, 0xFF8A00, (float) (0.34 * pulse), segments);
         addVerticalBeacon(draw, center, (float) Math.max(0.25, outer * 0.13), 4.5f, 0xFF3A20, 0.15f);
         addVerticalBeacon(draw, center, (float) Math.max(0.12, effect.innerRadius * 0.10), 5.5f, 0xFFD050, 0.20f);
+    }
+
+    /**
+     * Purple recolor of the meteor target beacon: two pulsing rings plus a beacon pair. The
+     * block-surface coating is not reused — it is typed to {@link MeteorTarget} and its
+     * inner/outer-radius fade, and Gravitic Flux has a single radius.
+     */
+    private static void renderGraviticZone(DrawState draw, GraviticZone effect) {
+        double radius = Math.max(0.5, effect.radius);
+        double pulse = 0.72 + 0.28 * Math.sin(clientTicks * 0.3);
+        Vec3 center = new Vec3(effect.position.x, effect.position.y + 0.12, effect.position.z);
+        int segments = 72;
+        addHorizontalRing(draw, center, radius, 0.12f, 0x7A5CFF, (float) (0.50 * pulse), segments);
+        double breathingRadius = radius * (0.55 + 0.08 * Math.sin(clientTicks * 0.18));
+        addHorizontalRing(draw, center.add(0, 0.07, 0), breathingRadius, 0.10f, 0xB04AD8, (float) (0.38 * pulse), segments);
+        addVerticalBeacon(draw, center, (float) Math.max(0.25, radius * 0.13), 4.5f, 0x7A5CFF, 0.15f);
+        addVerticalBeacon(draw, center, (float) Math.max(0.12, radius * 0.06), 5.5f, 0xB04AD8, 0.20f);
     }
 
     private static void collectMeteorBlockCoating(
@@ -908,6 +1039,17 @@ public class ClientGauntletEffects {
 
         boolean shouldRebuildSurfaces(int tick) {
             return lastSurfaceBuildTick == Integer.MIN_VALUE || tick - lastSurfaceBuildTick >= METEOR_SURFACE_REBUILD_INTERVAL_TICKS;
+        }
+    }
+
+    private static class GraviticZone extends Timed {
+        final Vec3 position;
+        final float radius;
+
+        GraviticZone(int ticksRemaining, Vec3 position, float radius) {
+            super(ticksRemaining);
+            this.position = position;
+            this.radius = radius;
         }
     }
 

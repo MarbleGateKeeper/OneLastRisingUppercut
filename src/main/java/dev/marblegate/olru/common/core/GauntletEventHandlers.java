@@ -7,6 +7,7 @@ import dev.marblegate.olru.common.attachment.skill.SkillState;
 import dev.marblegate.olru.common.item.FinalAnswerGauntletItem;
 import dev.marblegate.olru.common.item.LegacyOfHorusGauntletItem;
 import dev.marblegate.olru.common.item.LegacyPrimeGauntletItem;
+import dev.marblegate.olru.common.item.TheAxiomGauntletItem;
 import dev.marblegate.olru.common.registry.OLRUAttachments;
 import dev.marblegate.olru.common.util.GauntletHelper;
 import dev.marblegate.olru.config.OLRUConfig;
@@ -37,6 +38,13 @@ public class GauntletEventHandlers {
             addFinalAnswerCoalescenceCharge(
                     player,
                     event.getNewDamage() * (float) (OLRUConfig.FINAL_ANSWER.COALESCENCE.chargePercentPerDamage.get() / 100.0));
+            return;
+        }
+        if (player.getMainHandItem().getItem() instanceof TheAxiomGauntletItem) {
+            if (event.getEntity() == player || GauntletHelper.isFriendly(player, event.getEntity())) return;
+            addAxiomFluxCharge(
+                    player,
+                    event.getNewDamage() * (float) (OLRUConfig.THE_AXIOM.GRAVITIC_FLUX.chargePercentPerDamage.get() / 100.0));
         }
     }
 
@@ -73,6 +81,22 @@ public class GauntletEventHandlers {
     public static void addFinalAnswerCoalescenceCharge(ServerPlayer player, float progress) {
         if (progress <= 0f) return;
         if (!(player.getMainHandItem().getItem() instanceof FinalAnswerGauntletItem gauntlet)) return;
+
+        GauntletEntityState state = player.getData(OLRUAttachments.GAUNTLET_STATE.get());
+        GauntletSkillGroup group = state.getOrCreate(
+                gauntlet.gauntletId(), gauntlet::createDefaultSkillGroup).group();
+
+        SkillState ultimateState = group.get(SkillType.ULTIMATE);
+        if (!(ultimateState instanceof ConditionalChargeState ccs)) return;
+        if (ccs.isUsable()) return;
+
+        ccs.addProgress(progress);
+        player.setData(OLRUAttachments.GAUNTLET_STATE.get(), state);
+    }
+
+    public static void addAxiomFluxCharge(ServerPlayer player, float progress) {
+        if (progress <= 0f) return;
+        if (!(player.getMainHandItem().getItem() instanceof TheAxiomGauntletItem gauntlet)) return;
 
         GauntletEntityState state = player.getData(OLRUAttachments.GAUNTLET_STATE.get());
         GauntletSkillGroup group = state.getOrCreate(

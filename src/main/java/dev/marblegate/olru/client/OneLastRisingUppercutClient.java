@@ -9,7 +9,10 @@ import dev.marblegate.olru.client.hud.GauntletHudRenderer;
 import dev.marblegate.olru.client.hud.SedationOverlayRenderer;
 import dev.marblegate.olru.client.movement.ClientMovementInteractionState;
 import dev.marblegate.olru.client.movement.ClientMovementManager;
+import dev.marblegate.olru.client.render.AccretionBoulderRenderer;
+import dev.marblegate.olru.client.render.AxiomBarrierRenderer;
 import dev.marblegate.olru.client.render.BioticOrbRenderer;
+import dev.marblegate.olru.client.render.HypersphereRenderer;
 import dev.marblegate.olru.client.render.effect.GauntletClientEffectRenderers;
 import dev.marblegate.olru.common.OneLastRisingUppercut;
 import dev.marblegate.olru.common.attachment.GauntletEntityState;
@@ -66,6 +69,9 @@ public class OneLastRisingUppercutClient {
     private void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(OLRUEntityTypes.BIOTIC_GRENADE.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(OLRUEntityTypes.BIOTIC_ORB.get(), BioticOrbRenderer::new);
+        event.registerEntityRenderer(OLRUEntityTypes.HYPERSPHERE.get(), HypersphereRenderer::new);
+        event.registerEntityRenderer(OLRUEntityTypes.AXIOM_BARRIER.get(), AxiomBarrierRenderer::new);
+        event.registerEntityRenderer(OLRUEntityTypes.ACCRETION_BOULDER.get(), AccretionBoulderRenderer::new);
     }
 
     private void addEntityRenderLayers(EntityRenderersEvent.AddLayers event) {
@@ -81,6 +87,7 @@ public class OneLastRisingUppercutClient {
         ClientGauntletEffects.tick();
         ClientGauntletAnimations.tick();
         ClientCameraEffects.tick();
+        AxiomBarrierRenderer.tick();
         if (mc.player == null || mc.level == null) {
             ClientMovementInteractionState.clear();
             return;

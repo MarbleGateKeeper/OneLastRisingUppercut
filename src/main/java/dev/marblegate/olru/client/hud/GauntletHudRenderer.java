@@ -311,7 +311,7 @@ public class GauntletHudRenderer implements GuiLayer {
             boolean released = switch (data.mode()) {
                 case COOLDOWN -> anim.lastUsable && !data.usable();
                 case INCREMENTAL_CHARGE, FULL_CHARGE -> data.currentCharges() < anim.lastCharges;
-                case CONDITIONAL -> false;
+                case CONDITIONAL, RESOURCE_COOLDOWN -> false;
             };
             if (released) anim.popStart = time;
             if (!anim.lastUsable && data.usable()) anim.readyFlashStart = time;

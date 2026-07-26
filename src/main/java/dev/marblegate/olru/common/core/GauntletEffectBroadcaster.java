@@ -50,6 +50,26 @@ public class GauntletEffectBroadcaster {
         broadcast(player.level(), target, payload);
     }
 
+    public static void graviticZone(ServerPlayer caster, Vec3 pos, float radius, int durationTicks) {
+        ClientboundGauntletEffectPayload payload = new ClientboundGauntletEffectPayload(
+                EffectType.GRAVITIC_ZONE, caster.getId(), -1, pos,
+                radius, 0f, durationTicks, true);
+        PacketDistributor.sendToPlayer(caster, payload);
+        broadcast(caster.level(), pos, payload);
+    }
+
+    public static void stopGraviticZone(ServerPlayer caster) {
+        stopGraviticZone(caster, caster.position());
+    }
+
+    public static void stopGraviticZone(ServerPlayer caster, Vec3 pos) {
+        ClientboundGauntletEffectPayload payload = new ClientboundGauntletEffectPayload(
+                EffectType.GRAVITIC_ZONE, caster.getId(), -1, pos,
+                0f, 0f, 0, false);
+        PacketDistributor.sendToPlayer(caster, payload);
+        broadcast(caster.level(), pos, payload);
+    }
+
     public static void fieldExtractionBeam(ServerPlayer player, Entity target, int durationTicks) {
         broadcast(player.level(), player.position(), new ClientboundGauntletEffectPayload(
                 EffectType.FIELD_EXTRACTION_BEAM, player.getId(), target.getId(), target.position(),
@@ -106,6 +126,18 @@ public class GauntletEffectBroadcaster {
     public static void stopCoalescenceBeam(ServerPlayer caster) {
         broadcast(caster.level(), caster.position(), new ClientboundGauntletEffectPayload(
                 EffectType.COALESCENCE_BEAM, caster.getId(), -1, caster.position(),
+                0f, 0f, 0, false));
+    }
+
+    public static void kineticGraspField(ServerPlayer player, int durationTicks) {
+        broadcast(player.level(), player.position(), new ClientboundGauntletEffectPayload(
+                EffectType.KINETIC_GRASP_FIELD, player.getId(), -1, player.position(),
+                0f, 0f, durationTicks, true));
+    }
+
+    public static void stopKineticGraspField(ServerPlayer player) {
+        broadcast(player.level(), player.position(), new ClientboundGauntletEffectPayload(
+                EffectType.KINETIC_GRASP_FIELD, player.getId(), -1, player.position(),
                 0f, 0f, 0, false));
     }
 

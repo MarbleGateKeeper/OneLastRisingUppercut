@@ -19,6 +19,7 @@ public class OLRUCreativeTabs {
                 output.accept(OLRUItems.LEGACY_PRIME.get());
                 output.accept(OLRUItems.LEGACY_OF_HORUS.get());
                 output.accept(OLRUItems.FINAL_ANSWER.get());
+                output.accept(OLRUItems.THE_AXIOM.get());
             })
             .build());
 }

@@ -136,6 +136,59 @@ public final class GauntletSoundHelper {
         play(level, pos, SoundEvents.BEACON_AMBIENT, 0.5f, 0.5f);
     }
 
+    public static void hyperspheresFire(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.SCULK_SHRIEKER_SHRIEK, 0.3f, 1.8f);
+    }
+
+    public static void hypersphereImplode(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.SCULK_BLOCK_BREAK, 0.6f, 1.2f);
+    }
+
+    public static void barrierDeploy(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.BEACON_ACTIVATE, 0.4f, 0.7f);
+    }
+
+    public static void barrierAbsorb(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.SCULK_BLOCK_BREAK, 0.4f, 1.8f);
+    }
+
+    public static void barrierShatter(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.SCULK_BLOCK_BREAK, 0.8f, 0.5f);
+        play(level, pos, SoundEvents.GLASS_BREAK, 0.7f, 0.8f);
+    }
+
+    public static void kineticGrasp(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.BEACON_ACTIVATE, 0.5f, 0.6f);
+    }
+
+    /** Rising gather cue while the Accretion boulder materializes; {@code progress} is 0..1. */
+    public static void accretionGather(ServerLevel level, Vec3 pos, float progress) {
+        play(level, pos, SoundEvents.RESPAWN_ANCHOR_CHARGE, 0.4f, 0.8f + Math.clamp(progress, 0f, 1f) * 0.6f);
+    }
+
+    public static void accretionThrow(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.SNOWBALL_THROW, 0.8f, 0.5f);
+        play(level, pos, SoundEvents.ENDER_DRAGON_FLAP, 0.4f, 0.7f);
+    }
+
+    public static void accretionImpact(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.SCULK_BLOCK_BREAK, 0.8f, 0.6f);
+        play(level, pos, SoundEvents.ANVIL_LAND, 0.4f, 1.2f);
+    }
+
+    public static void fluxRise(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.BEACON_ACTIVATE, 0.6f, 0.5f);
+    }
+
+    public static void fluxLift(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.ENDER_DRAGON_FLAP, 0.7f, 0.5f);
+        play(level, pos, SoundEvents.BEACON_POWER_SELECT, 0.8f, 0.7f);
+    }
+
+    public static void fluxSlam(ServerLevel level, Vec3 pos) {
+        play(level, pos, SoundEvents.GENERIC_EXPLODE, 0.7f, 0.5f);
+    }
+
     private static void play(ServerLevel level, Vec3 pos, SoundEvent sound, float volume, float pitch) {
         level.playSound(null, pos.x, pos.y, pos.z, sound, SoundSource.PLAYERS, volume, pitch);
     }

@@ -12,6 +12,7 @@ public class GauntletTooltipHelper {
     private static final ChatFormatting PRIME_ACCENT = ChatFormatting.GOLD;
     private static final ChatFormatting HORUS_ACCENT = ChatFormatting.AQUA;
     private static final ChatFormatting FINAL_ANSWER_ACCENT = ChatFormatting.LIGHT_PURPLE;
+    private static final ChatFormatting AXIOM_ACCENT = ChatFormatting.DARK_PURPLE;
     private static final ChatFormatting LABEL = ChatFormatting.DARK_AQUA;
     private static final ChatFormatting BODY = ChatFormatting.GRAY;
     private static final ChatFormatting MUTED = ChatFormatting.DARK_GRAY;
@@ -106,7 +107,6 @@ public class GauntletTooltipHelper {
         var fade = OLRUConfig.FINAL_ANSWER.FADE;
         var bioticOrb = OLRUConfig.FINAL_ANSWER.BIOTIC_ORB;
         var coalescence = OLRUConfig.FINAL_ANSWER.COALESCENCE;
-
         appendHeader(tooltip, "tooltip.olru.final_answer.style", expanded);
         if (!expanded) return;
         appendSkill(tooltip, "LMB", "skill.olru.final_answer.normal_attack", FINAL_ANSWER_ACCENT,
@@ -140,6 +140,46 @@ public class GauntletTooltipHelper {
                         number(coalescence.length.get()), sec(coalescence.durationTicks.get()),
                         number(coalescence.enemyDamagePerPulse.get()),
                         number(coalescence.allyHealPerPulse.get()), number(coalescence.selfHealPerPulse.get())));
+    }
+
+    public static void appendTheAxiom(Consumer<Component> tooltip, boolean expanded) {
+        var hyperspheres = OLRUConfig.THE_AXIOM.HYPERSPHERES;
+        var barrier = OLRUConfig.THE_AXIOM.EXPERIMENTAL_BARRIER;
+        var grasp = OLRUConfig.THE_AXIOM.KINETIC_GRASP;
+        var accretion = OLRUConfig.THE_AXIOM.ACCRETION;
+        var flux = OLRUConfig.THE_AXIOM.GRAVITIC_FLUX;
+
+        appendHeader(tooltip, "tooltip.olru.the_axiom.style", expanded);
+        if (!expanded) return;
+        appendSkill(tooltip, "LMB", "skill.olru.the_axiom.normal_attack", AXIOM_ACCENT,
+                Component.translatable("tooltip.olru.the_axiom.normal_attack.mechanic"),
+                Component.translatable("tooltip.olru.the_axiom.normal_attack.info",
+                        hyperspheres.maxCharges.get(), sec(hyperspheres.cooldownTicks.get()),
+                        number(hyperspheres.range.get()), number(hyperspheres.directDamage.get()),
+                        number(hyperspheres.implosionDamage.get()), number(hyperspheres.implosionRadius.get())));
+        appendSkill(tooltip, "RMB", "skill.olru.the_axiom.skill_one", AXIOM_ACCENT,
+                Component.translatable("tooltip.olru.the_axiom.skill_one.mechanic"),
+                Component.translatable("tooltip.olru.the_axiom.skill_one.info",
+                        number(barrier.maxDurability.get()), number(barrier.width.get()), number(barrier.height.get()),
+                        number(barrier.minDeployDistance.get()), number(barrier.maxDeployDistance.get()),
+                        number(barrier.durabilityRegenPerSecond.get())));
+        appendSkill(tooltip, "Sft", "skill.olru.the_axiom.skill_two", AXIOM_ACCENT,
+                Component.translatable("tooltip.olru.the_axiom.skill_two.mechanic"),
+                Component.translatable("tooltip.olru.the_axiom.skill_two.info",
+                        sec(grasp.cooldownTicks.get()), sec(grasp.durationTicks.get()),
+                        number(grasp.range.get()), number(grasp.coneAngleDegrees.get()),
+                        number(grasp.maxShield.get())));
+        appendSkill(tooltip, "V", "skill.olru.the_axiom.skill_three", AXIOM_ACCENT,
+                Component.translatable("tooltip.olru.the_axiom.skill_three.mechanic"),
+                Component.translatable("tooltip.olru.the_axiom.skill_three.info",
+                        sec(accretion.cooldownTicks.get()), number(accretion.damage.get()),
+                        number(accretion.splashDamage.get()), number(accretion.splashRadius.get()),
+                        sec(accretion.knockdownTicks.get())));
+        appendSkill(tooltip, "X", "skill.olru.the_axiom.ultimate", AXIOM_ACCENT,
+                Component.translatable("tooltip.olru.the_axiom.ultimate.mechanic"),
+                Component.translatable("tooltip.olru.the_axiom.ultimate.info",
+                        number(flux.chargePercentPerDamage.get()), number(flux.zoneRadius.get()),
+                        number(flux.liftHeight.get()), percent(flux.slamMaxHealthFraction.get())));
     }
 
     private static void appendHeader(Consumer<Component> tooltip, String styleKey, boolean expanded) {

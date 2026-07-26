@@ -1,12 +1,15 @@
 package dev.marblegate.olru.common.core;
 
+import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.PowerParticleOption;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,5 +126,91 @@ public final class GauntletParticleHelper {
             level.sendParticles(PowerParticleOption.create(ParticleTypes.DRAGON_BREATH, 1.0f),
                     p.x, p.y, p.z, 1, 0.12, 0.12, 0.12, 0.0);
         }
+    }
+
+    /** Purple dust ring expanding from a Hypersphere implosion. */
+    public static void hypersphereImplosion(ServerLevel level, Vec3 pos, double radius) {
+        DustParticleOptions dust = new DustParticleOptions(0x9B4DFF, 1.1f);
+        for (int i = 0; i < 16; i++) {
+            double angle = i * Math.PI * 2.0 / 16;
+            level.sendParticles(dust,
+                    pos.x + Math.cos(angle) * radius * 0.6, pos.y, pos.z + Math.sin(angle) * radius * 0.6,
+                    1, 0.05, 0.05, 0.05, 0.0);
+        }
+        level.sendParticles(dust, pos.x, pos.y, pos.z, 8, 0.2, 0.2, 0.2, 0.02);
+    }
+
+    /** Tight purple freeze-burst where the Experimental Barrier annihilates a projectile. */
+    public static void barrierAbsorbBurst(ServerLevel level, Vec3 pos) {
+        level.sendParticles(new DustParticleOptions(0x9B4DFF, 0.9f), pos.x, pos.y, pos.z, 6, 0.12, 0.12, 0.12, 0.0);
+    }
+
+    /** Small purple shrink-burst when the Experimental Barrier is recalled. */
+    public static void barrierRecallBurst(ServerLevel level, Vec3 pos) {
+        level.sendParticles(new DustParticleOptions(0x9B4DFF, 1.0f), pos.x, pos.y, pos.z, 12, 0.6, 0.5, 0.15, 0.0);
+    }
+
+    /** Big purple shatter when the Experimental Barrier's durability breaks. */
+    public static void barrierShatterBurst(ServerLevel level, Vec3 pos) {
+        DustParticleOptions dust = new DustParticleOptions(0x9B4DFF, 1.2f);
+        level.sendParticles(dust, pos.x, pos.y, pos.z, 40, 1.6, 1.0, 0.25, 0.05);
+        level.sendParticles(ParticleTypes.END_ROD, pos.x, pos.y, pos.z, 10, 1.2, 0.8, 0.2, 0.06);
+    }
+
+    /** Stone debris and purple dust converging on the materializing Accretion boulder. */
+    public static void accretionGather(ServerLevel level, Vec3 pos) {
+        BlockParticleOption debris = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());
+        DustParticleOptions dust = new DustParticleOptions(0x9B4DFF, 0.9f);
+        RandomSource random = level.getRandom();
+        for (int i = 0; i < 3; i++) {
+            double angle = random.nextDouble() * Math.PI * 2.0;
+            double radius = 0.7 + random.nextDouble() * 0.4;
+            Vec3 offset = new Vec3(
+                    Math.cos(angle) * radius, (random.nextDouble() - 0.5) * 0.6, Math.sin(angle) * radius);
+            // count=0 turns the dist args into an exact velocity: drift inward, arriving in ~6 ticks.
+            Vec3 velocity = offset.scale(-1.0 / 6.0);
+            ParticleOptions option = random.nextInt(3) == 0 ? dust : debris;
+            Vec3 p = pos.add(offset);
+            level.sendParticles(option, p.x, p.y, p.z, 0, velocity.x, velocity.y, velocity.z, 1.0);
+        }
+    }
+
+    /** Stone-debris burst plus a purple flash where the Accretion boulder lands. */
+    public static void accretionImpactBurst(ServerLevel level, Vec3 pos) {
+        BlockParticleOption debris = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());
+        level.sendParticles(debris, pos.x, pos.y, pos.z, 24, 0.4, 0.3, 0.4, 0.12);
+        level.sendParticles(new DustParticleOptions(0x9B4DFF, 1.1f), pos.x, pos.y, pos.z, 8, 0.35, 0.25, 0.35, 0.02);
+    }
+
+    /** Small stone crumble when the Accretion boulder expires mid-flight. */
+    public static void accretionCrumbleBurst(ServerLevel level, Vec3 pos) {
+        BlockParticleOption debris = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());
+        level.sendParticles(debris, pos.x, pos.y, pos.z, 8, 0.25, 0.2, 0.25, 0.06);
+    }
+
+    /** Rising purple spiral where a Gravitic Flux target is lifted. */
+    public static void fluxLift(ServerLevel level, Vec3 pos, double liftHeight) {
+        DustParticleOptions dust = new DustParticleOptions(0x9B4DFF, 1.0f);
+        int points = 12;
+        for (int i = 0; i < points; i++) {
+            double t = (double) i / (points - 1);
+            double angle = t * Math.PI * 4.0;
+            level.sendParticles(dust,
+                    pos.x + Math.cos(angle) * 0.5, pos.y + 0.2 + t * liftHeight, pos.z + Math.sin(angle) * 0.5,
+                    1, 0.05, 0.05, 0.05, 0.0);
+        }
+    }
+
+    /** Downward purple shock ring where Gravitic Flux slams its targets into the ground. */
+    public static void fluxSlamShock(ServerLevel level, Vec3 pos, double radius) {
+        DustParticleOptions dust = new DustParticleOptions(0x9B4DFF, 1.2f);
+        for (int i = 0; i < 24; i++) {
+            double angle = i * Math.PI * 2.0 / 24;
+            level.sendParticles(dust,
+                    pos.x + Math.cos(angle) * radius * 0.8, pos.y + 0.4, pos.z + Math.sin(angle) * radius * 0.8,
+                    1, 0.05, 0.35, 0.05, 0.0);
+        }
+        level.sendParticles(ParticleTypes.EXPLOSION, pos.x, pos.y + 0.5, pos.z, 2, radius * 0.3, 0.3, radius * 0.3, 0.0);
+        level.sendParticles(dust, pos.x, pos.y + 0.5, pos.z, 16, radius * 0.5, 0.4, radius * 0.5, 0.02);
     }
 }

@@ -10,7 +10,8 @@ public enum SkillStateType {
     COOLDOWN,
     INCREMENTAL_CHARGE,
     FULL_CHARGE,
-    CONDITIONAL;
+    CONDITIONAL,
+    RESOURCE_COOLDOWN;
 
     private static final SkillStateType[] VALUES = values();
 
@@ -31,6 +32,7 @@ public enum SkillStateType {
             case INCREMENTAL_CHARGE -> IncrementalChargeState.MAP_CODEC;
             case FULL_CHARGE -> FullChargeState.MAP_CODEC;
             case CONDITIONAL -> ConditionalChargeState.MAP_CODEC;
+            case RESOURCE_COOLDOWN -> ResourceCooldownState.MAP_CODEC;
         };
     }
 }

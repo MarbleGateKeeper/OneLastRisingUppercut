@@ -100,6 +100,29 @@ public final class GauntletPoses {
                 part(GauntletPose.Part.RIGHT_ARM, -85f, 0f, 8f),
                 part(GauntletPose.Part.LEFT_ARM, -85f, 0f, -8f),
                 part(GauntletPose.Part.BODY, 4f, 0f, 0f));
+        register(GauntletPoseType.HYPERSPHERES_FIRE, 5, 1, 4, fp(0f, 0.02f, 0.08f, 6f),
+                part(GauntletPose.Part.RIGHT_ARM, -80f, 0f, 0f),
+                part(GauntletPose.Part.BODY, 0f, -6f, 0f));
+        registerLoop(GauntletPoseType.BARRIER_CHANNEL, 3, 3, fp(-0.08f, 0f, -0.10f, -6f),
+                part(GauntletPose.Part.LEFT_ARM, -75f, 0f, 0f),
+                part(GauntletPose.Part.BODY, 5f, 0f, 0f));
+        register(GauntletPoseType.KINETIC_GRASP, 10, 2, 6, fp(0f, 0.04f, 0.10f, 8f),
+                part(GauntletPose.Part.RIGHT_ARM, -50f, 35f, 0f),
+                part(GauntletPose.Part.LEFT_ARM, -50f, -35f, 0f),
+                part(GauntletPose.Part.BODY, 8f, 0f, 0f));
+        register(GauntletPoseType.ACCRETION_THROW, 8, 2, 5, fp(0f, 0.08f, -0.06f, -25f),
+                part(GauntletPose.Part.RIGHT_ARM, -145f, 0f, 0f),
+                part(GauntletPose.Part.BODY, 0f, -12f, 0f));
+        registerLoop(GauntletPoseType.FLUX_CHANNEL, 3, 3, fp(0.08f, -0.02f, 0.06f, 0f),
+                part(GauntletPose.Part.RIGHT_ARM, 0f, 0f, 70f),
+                part(GauntletPose.Part.LEFT_ARM, 0f, 0f, -70f),
+                part(GauntletPose.Part.BODY, -5f, 0f, 0f));
+        register(GauntletPoseType.FLUX_SLAM, 12, 2, 8, fp(0.05f, -0.10f, 0.16f, 18f),
+                part(GauntletPose.Part.BODY, 0f, 0f, 0f, 0f, 3f, 0f),
+                part(GauntletPose.Part.RIGHT_ARM, -60f, 0f, 0f),
+                part(GauntletPose.Part.LEFT_ARM, 30f, 0f, 0f),
+                part(GauntletPose.Part.RIGHT_LEG, -35f, 0f, 0f),
+                part(GauntletPose.Part.LEFT_LEG, 35f, 0f, 0f));
     }
 
     private GauntletPoses() {}

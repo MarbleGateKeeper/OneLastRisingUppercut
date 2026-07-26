@@ -65,7 +65,9 @@ public record ClientboundGauntletEffectPayload(
         NANO_SURGE_CAST(9),
         ORB_TETHER(10),
         COALESCENCE_BEAM(11),
-        FADE(12);
+        FADE(12),
+        GRAVITIC_ZONE(13),
+        KINETIC_GRASP_FIELD(14);
 
         private final byte networkId;
 

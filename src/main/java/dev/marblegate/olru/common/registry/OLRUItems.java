@@ -4,6 +4,7 @@ import dev.marblegate.olru.common.OneLastRisingUppercut;
 import dev.marblegate.olru.common.item.FinalAnswerGauntletItem;
 import dev.marblegate.olru.common.item.LegacyOfHorusGauntletItem;
 import dev.marblegate.olru.common.item.LegacyPrimeGauntletItem;
+import dev.marblegate.olru.common.item.TheAxiomGauntletItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -25,4 +26,8 @@ public class OLRUItems {
     public static final DeferredItem<FinalAnswerGauntletItem> FINAL_ANSWER = ITEMS.register("final_answer",
             () -> new FinalAnswerGauntletItem(new Item.Properties().setId(ResourceKey.create(Registries.ITEM,
                     Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "final_answer"))).stacksTo(1)));
+
+    public static final DeferredItem<TheAxiomGauntletItem> THE_AXIOM = ITEMS.register("the_axiom",
+            () -> new TheAxiomGauntletItem(new Item.Properties().setId(ResourceKey.create(Registries.ITEM,
+                    Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "the_axiom"))).stacksTo(1)));
 }

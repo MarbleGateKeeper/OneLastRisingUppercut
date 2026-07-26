@@ -8,6 +8,7 @@ public class OLRUConfig {
     public static final LegacyPrimeGauntletConfig LEGACY_PRIME;
     public static final HorusGauntletConfig HORUS;
     public static final FinalAnswerGauntletConfig FINAL_ANSWER;
+    public static final AxiomGauntletConfig THE_AXIOM;
 
     static {
         BUILDER.push("legacy_prime").comment("Configuration for Legacy Prime");
@@ -20,6 +21,10 @@ public class OLRUConfig {
 
         BUILDER.push("final_answer").comment("Configuration for The Final Answer");
         FINAL_ANSWER = new FinalAnswerGauntletConfig(BUILDER);
+        BUILDER.pop();
+
+        BUILDER.push("the_axiom").comment("Configuration for The Axiom");
+        THE_AXIOM = new AxiomGauntletConfig(BUILDER);
         BUILDER.pop();
     }
 
