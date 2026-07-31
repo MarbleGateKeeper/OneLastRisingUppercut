@@ -23,28 +23,28 @@ public class GauntletEventHandlers {
     public static void onLivingDamagePost(LivingDamageEvent.Post event) {
         if (!(event.getSource().getEntity() instanceof ServerPlayer player)) return;
         if (player.getMainHandItem().getItem() instanceof LegacyPrimeGauntletItem gauntlet) {
-            addLegacyPrimeMeteorCharge(player, gauntlet, event.getNewDamage());
+            addLegacyPrimeMeteorCharge(player, gauntlet, event.getInflictedDamage());
             return;
         }
         if (player.getMainHandItem().getItem() instanceof LegacyOfHorusGauntletItem) {
             if (event.getEntity() == player || GauntletHelper.isFriendly(player, event.getEntity())) return;
             addHorusNanoCharge(
                     player,
-                    event.getNewDamage() * (float) (OLRUConfig.HORUS.NANO_SURGE.chargePercentPerDamage.get() / 100.0));
+                    event.getInflictedDamage() * (float) (OLRUConfig.HORUS.NANO_SURGE.chargePercentPerDamage.get() / 100.0));
             return;
         }
         if (player.getMainHandItem().getItem() instanceof FinalAnswerGauntletItem) {
             if (event.getEntity() == player || GauntletHelper.isFriendly(player, event.getEntity())) return;
             addFinalAnswerCoalescenceCharge(
                     player,
-                    event.getNewDamage() * (float) (OLRUConfig.FINAL_ANSWER.COALESCENCE.chargePercentPerDamage.get() / 100.0));
+                    event.getInflictedDamage() * (float) (OLRUConfig.FINAL_ANSWER.COALESCENCE.chargePercentPerDamage.get() / 100.0));
             return;
         }
         if (player.getMainHandItem().getItem() instanceof TheAxiomGauntletItem) {
             if (event.getEntity() == player || GauntletHelper.isFriendly(player, event.getEntity())) return;
             addAxiomFluxCharge(
                     player,
-                    event.getNewDamage() * (float) (OLRUConfig.THE_AXIOM.GRAVITIC_FLUX.chargePercentPerDamage.get() / 100.0));
+                    event.getInflictedDamage() * (float) (OLRUConfig.THE_AXIOM.GRAVITIC_FLUX.chargePercentPerDamage.get() / 100.0));
         }
     }
 
