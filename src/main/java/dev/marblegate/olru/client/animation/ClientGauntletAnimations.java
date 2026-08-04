@@ -61,7 +61,14 @@ public final class ClientGauntletAnimations {
             state.setRenderData(GauntletPoseRenderData.KEY, null);
             return;
         }
-        state.setRenderData(GauntletPoseRenderData.KEY, evaluate(avatar.getId()));
+        Frame frame = evaluateFrame(avatar.getId());
+        if (frame == null) {
+            state.setRenderData(GauntletPoseRenderData.KEY, null);
+            return;
+        }
+        // Whole-body spin (e.g. Rising Uppercut) rides the entity render rotation, like vanilla spin attacks
+        state.bodyRot += frame.bodySpin();
+        state.setRenderData(GauntletPoseRenderData.KEY, new GauntletPoseRenderData(frame.parts(), frame.weight()));
     }
 
     /** Returns the currently active pose type for the given entity, or null when no pose is active. */
@@ -77,11 +84,6 @@ public final class ClientGauntletAnimations {
     public static @Nullable WeightedFp evaluateFp(int entityId) {
         Frame frame = evaluateFrame(entityId);
         return frame != null ? new WeightedFp(frame.fp(), frame.weight()) : null;
-    }
-
-    private static @Nullable GauntletPoseRenderData evaluate(int entityId) {
-        Frame frame = evaluateFrame(entityId);
-        return frame != null ? new GauntletPoseRenderData(frame.parts(), frame.weight()) : null;
     }
 
     private static @Nullable Frame evaluateFrame(int entityId) {
@@ -107,15 +109,16 @@ public final class ClientGauntletAnimations {
                 return new Frame(
                         lerpParts(snapshot.parts(), current.parts(), t),
                         lerpFp(snapshot.fp(), current.fp(), t),
-                        Mth.lerp(t, snapshot.weight(), current.weight()));
+                        Mth.lerp(t, snapshot.weight(), current.weight()),
+                        current.bodySpin());
             }
             LAST.put(entityId, new Snapshot(active.type(), current.parts(), current.fp(), current.weight(), time));
-            return new Frame(current.parts(), current.fp(), current.weight());
+            return new Frame(current.parts(), current.fp(), current.weight(), current.bodySpin());
         }
         if (snapshot != null) {
             float elapsed = time - snapshot.time();
             if (elapsed <= CROSSFADE_TICKS) {
-                return new Frame(snapshot.parts(), snapshot.fp(), snapshot.weight() * (1.0f - elapsed / CROSSFADE_TICKS));
+                return new Frame(snapshot.parts(), snapshot.fp(), snapshot.weight() * (1.0f - elapsed / CROSSFADE_TICKS), 0f);
             }
             LAST.remove(entityId);
         }
@@ -132,7 +135,7 @@ public final class ClientGauntletAnimations {
         EnumMap<GauntletPose.Part, GauntletPose.PartPose> parts = new EnumMap<>(GauntletPose.Part.class);
         pose.parts().forEach(parts::put);
         applyAdjustments(active.type(), parts, active.param(), time);
-        return new Evaluation(parts, pose.fp(), weight);
+        return new Evaluation(parts, pose.fp(), weight, spinDegrees(active.type(), age, active.durationTicks()));
     }
 
     private static void applyAdjustments(GauntletPoseType type, EnumMap<GauntletPose.Part, GauntletPose.PartPose> parts, float param, float time) {
@@ -195,15 +198,28 @@ public final class ClientGauntletAnimations {
         return t * t * (3f - 2f * t);
     }
 
+    /**
+     * Whole-body render spin for poses that have one, in degrees. Must complete a whole number of turns
+     * exactly at duration end, so the render rotation hands back to the entity's own yaw without a jump.
+     */
+    private static float spinDegrees(GauntletPoseType type, float ageTicks, float durationTicks) {
+        if (type == GauntletPoseType.RISING_UPPERCUT) {
+            return 360f * smoothstep(ageTicks, durationTicks);
+        }
+        return 0f;
+    }
+
     /** First-person arm transform of the active pose together with its current blend weight. */
     public record WeightedFp(GauntletPose.FpTransform transform, float weight) {}
 
     private record ActivePose(GauntletPoseType type, GauntletPose pose, float startTime, float refreshTime, float param,
             int durationTicks) {}
 
-    private record Evaluation(EnumMap<GauntletPose.Part, GauntletPose.PartPose> parts, GauntletPose.FpTransform fp, float weight) {}
+    private record Evaluation(EnumMap<GauntletPose.Part, GauntletPose.PartPose> parts, GauntletPose.FpTransform fp, float weight,
+            float bodySpin) {}
 
-    private record Frame(EnumMap<GauntletPose.Part, GauntletPose.PartPose> parts, GauntletPose.FpTransform fp, float weight) {}
+    private record Frame(EnumMap<GauntletPose.Part, GauntletPose.PartPose> parts, GauntletPose.FpTransform fp, float weight,
+            float bodySpin) {}
 
     private record Snapshot(GauntletPoseType type, EnumMap<GauntletPose.Part, GauntletPose.PartPose> parts,
             GauntletPose.FpTransform fp, float weight, float time) {}

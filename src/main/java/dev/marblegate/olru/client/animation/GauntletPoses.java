@@ -14,54 +14,67 @@ public final class GauntletPoses {
                 part(GauntletPose.Part.RIGHT_ARM, -90f, 0f, 0f),
                 part(GauntletPose.Part.BODY, 0f, -8f, 0f));
         registerLoop(GauntletPoseType.ROCKET_PUNCH_CHARGE, 3, 3, fp(0.06f, -0.04f, 0.14f, 12f),
-                part(GauntletPose.Part.RIGHT_ARM, 25f, 0f, 20f),
-                part(GauntletPose.Part.LEFT_ARM, -45f, 0f, 0f),
-                part(GauntletPose.Part.BODY, 0f, 25f, 0f, 0f, 1.2f, 0f),
-                part(GauntletPose.Part.RIGHT_LEG, -15f, 0f, 0f),
-                part(GauntletPose.Part.LEFT_LEG, 15f, 0f, 0f));
+                part(GauntletPose.Part.RIGHT_ARM, -82.2f, -17.3f, -3.2f, -0.3f, 1f, 1f),
+                part(GauntletPose.Part.LEFT_ARM, -87.4f, 28.6f, 18.5f, -1.3f, 1.9f, 3.6f),
+                part(GauntletPose.Part.BODY, 5f, 0f, 0f, 0f, 1f, 0f),
+                part(GauntletPose.Part.RIGHT_LEG, 49.5f, -45.1f, -32.8f, 0f, 0.75f, 2f),
+                part(GauntletPose.Part.LEFT_LEG, -13.7f, 6.8f, 0.9f, 0f, -0.25f, -2.75f),
+                part(GauntletPose.Part.HEAD, 0f, 52.5f, 0f, 0f, 1f, 0f));
         registerLoop(GauntletPoseType.ROCKET_PUNCH_FLIGHT, 2, 4, fp(-0.12f, 0.06f, -0.18f, -18f),
-                part(GauntletPose.Part.RIGHT_ARM, -90f, 0f, 0f),
-                part(GauntletPose.Part.LEFT_ARM, 30f, 0f, 0f),
-                part(GauntletPose.Part.BODY, 15f, 0f, 0f),
-                part(GauntletPose.Part.RIGHT_LEG, 10f, 0f, 0f),
-                part(GauntletPose.Part.LEFT_LEG, 10f, 0f, 0f));
+                part(GauntletPose.Part.RIGHT_ARM, -86.4f, 34.8f, 3.5f, 4.8f, 1f, -7.7f),
+                part(GauntletPose.Part.LEFT_ARM, 98.6f, 16.8f, 80.2f, -0.2f, 1.9f, 2.9f),
+                part(GauntletPose.Part.BODY, 20.3f, 49.7f, 5.9f, 1.1f, 1f, -1.7f),
+                part(GauntletPose.Part.RIGHT_LEG, 44.5f, -5.3f, -8.4f, -1f, -0.25f, 0.5f),
+                part(GauntletPose.Part.LEFT_LEG, -21.2f, 6.8f, 0.9f, 1f, -1.25f, 1f),
+                part(GauntletPose.Part.HEAD, 0f, 30f, 0f, 1.1f, 2f, -1.7f));
         register(GauntletPoseType.ROCKET_PUNCH_IMPACT, 8, 1, 6, fp(-0.10f, 0.04f, -0.16f, -14f),
-                part(GauntletPose.Part.RIGHT_ARM, -100f, 0f, 0f),
-                part(GauntletPose.Part.BODY, 20f, 0f, 0f));
+                part(GauntletPose.Part.RIGHT_ARM, -95f, 0f, 0f, 0f, 0f, -2f),
+                part(GauntletPose.Part.BODY, 25f, 0f, 0f, 0f, 0f, -1f),
+                part(GauntletPose.Part.HEAD, 15f, 0f, 0f));
         register(GauntletPoseType.RISING_UPPERCUT, 12, 2, 4, fp(-0.08f, 0.10f, -0.10f, -25f),
                 part(GauntletPose.Part.RIGHT_ARM, -170f, 0f, 0f),
                 part(GauntletPose.Part.BODY, -12f, 0f, 0f),
                 part(GauntletPose.Part.RIGHT_LEG, 20f, 0f, 0f),
                 part(GauntletPose.Part.LEFT_LEG, 20f, 0f, 0f));
         registerLoop(GauntletPoseType.SEISMIC_SLAM_LEAP, 3, 3, fp(-0.05f, 0.08f, -0.05f, -20f),
-                part(GauntletPose.Part.RIGHT_ARM, -160f, 0f, 0f),
-                part(GauntletPose.Part.LEFT_ARM, -160f, 0f, 0f),
-                part(GauntletPose.Part.BODY, 10f, 0f, 0f));
+                // -225.2° xRot is congruent to 134.8° but steers the blend arc forward over the top:
+                // wind-up on blend-in, forward-down slam on blend to SEISMIC_SLAM_LAND
+                part(GauntletPose.Part.RIGHT_ARM, -225.2f, -39.6f, 11.1f),
+                part(GauntletPose.Part.LEFT_ARM, -111.7f, -19.6f, -7.9f),
+                part(GauntletPose.Part.BODY, -14.1f, -51.5f, 13.3f),
+                part(GauntletPose.Part.RIGHT_LEG, 28.8f, 11.8f, -3.9f),
+                part(GauntletPose.Part.LEFT_LEG, 48.8f, 29.8f, 45.8f),
+                part(GauntletPose.Part.HEAD, -2.5f, 5f, 12.5f));
         register(GauntletPoseType.SEISMIC_SLAM_LAND, 12, 2, 8, fp(0.04f, -0.10f, 0.16f, 18f),
-                part(GauntletPose.Part.BODY, 0f, 0f, 0f, 0f, 3f, 0f),
-                part(GauntletPose.Part.RIGHT_ARM, -70f, 0f, 0f),
-                part(GauntletPose.Part.LEFT_ARM, 30f, 0f, 0f),
-                part(GauntletPose.Part.RIGHT_LEG, -35f, 0f, 0f),
-                part(GauntletPose.Part.LEFT_LEG, 35f, 0f, 0f));
+                part(GauntletPose.Part.BODY, -2.5f, 5f, 12.5f, 0f, 7f, 0f),
+                part(GauntletPose.Part.RIGHT_ARM, -80.2f, -39.6f, 11.1f, -0.25f, 8f, -2.75f),
+                part(GauntletPose.Part.LEFT_ARM, -80.7f, 32.3f, 0f, 1f, 7f, 1f),
+                part(GauntletPose.Part.RIGHT_LEG, -21.2f, 11.8f, -3.9f, 3.75f, 2.75f, -3f),
+                part(GauntletPose.Part.LEFT_LEG, 48.8f, 29.8f, 45.8f, 2.25f, 2.5f, 0.75f),
+                part(GauntletPose.Part.HEAD, -41.6f, -51.5f, 13.3f, 0.25f, 7.25f, -0.75f));
         registerLoop(GauntletPoseType.METEOR_HOVER, 4, 4, fp(0.08f, -0.02f, 0.06f, 0f),
-                part(GauntletPose.Part.RIGHT_ARM, 0f, 0f, 70f),
-                part(GauntletPose.Part.LEFT_ARM, 0f, 0f, -70f));
+                part(GauntletPose.Part.RIGHT_ARM, -160f, 0f, 25f),
+                part(GauntletPose.Part.LEFT_ARM, -40f, 0f, -10f),
+                part(GauntletPose.Part.BODY, 5f, 0f, -8f),
+                part(GauntletPose.Part.RIGHT_LEG, -10f, 0f, 0f),
+                part(GauntletPose.Part.LEFT_LEG, 15f, 0f, 0f));
         registerLoop(GauntletPoseType.METEOR_DIVE, 3, 4, fp(-0.14f, 0.10f, -0.22f, -30f),
-                part(GauntletPose.Part.RIGHT_ARM, -100f, 0f, 0f),
-                part(GauntletPose.Part.LEFT_ARM, 30f, 0f, 0f),
-                part(GauntletPose.Part.BODY, 75f, 0f, 0f),
-                part(GauntletPose.Part.HEAD, -40f, 0f, 0f),
-                part(GauntletPose.Part.RIGHT_LEG, 8f, 0f, 0f),
-                part(GauntletPose.Part.LEFT_LEG, 8f, 0f, 0f));
+                part(GauntletPose.Part.RIGHT_ARM, -85f, -10f, 0f),
+                part(GauntletPose.Part.LEFT_ARM, 45f, 0f, -15f),
+                part(GauntletPose.Part.BODY, 78f, 0f, 8f),
+                part(GauntletPose.Part.HEAD, -25f, 0f, 0f),
+                part(GauntletPose.Part.RIGHT_LEG, 35f, 0f, 5f),
+                part(GauntletPose.Part.LEFT_LEG, 20f, 0f, -8f));
         register(GauntletPoseType.METEOR_LAND, 14, 2, 8, fp(0.05f, -0.12f, 0.18f, 20f),
-                part(GauntletPose.Part.BODY, 0f, 0f, 0f, 0f, 3.5f, 0f),
-                part(GauntletPose.Part.RIGHT_ARM, -85f, 0f, 0f),
-                part(GauntletPose.Part.LEFT_ARM, 30f, 0f, 0f),
-                part(GauntletPose.Part.RIGHT_LEG, -40f, 0f, 0f),
+                part(GauntletPose.Part.BODY, 10f, 0f, 0f, 0f, 4.5f, 0f),
+                part(GauntletPose.Part.RIGHT_ARM, -25f, 0f, 0f, 0f, 3.5f, -1.5f),
+                part(GauntletPose.Part.LEFT_ARM, 30f, 0f, -25f),
+                part(GauntletPose.Part.RIGHT_LEG, -55f, 0f, 0f),
                 part(GauntletPose.Part.LEFT_LEG, 40f, 0f, 0f),
                 part(GauntletPose.Part.HEAD, 15f, 0f, 0f));
         register(GauntletPoseType.HORUS_BIOTIC_ROUND_RECOIL, 5, 1, 4, fp(0f, 0.02f, 0.08f, 6f),
                 part(GauntletPose.Part.RIGHT_ARM, -70f, 0f, 0f),
+                part(GauntletPose.Part.LEFT_ARM, -45f, 20f, 0f),
                 part(GauntletPose.Part.BODY, 0f, -6f, 0f));
         registerLoop(GauntletPoseType.FIELD_EXTRACTION_CHANNEL, 3, 3, fp(-0.06f, 0f, -0.12f, -8f),
                 part(GauntletPose.Part.RIGHT_ARM, -75f, 0f, -10f),
@@ -87,7 +100,7 @@ public final class GauntletPoses {
                 part(GauntletPose.Part.RIGHT_ARM, -75f, 0f, 0f),
                 part(GauntletPose.Part.BODY, 0f, -6f, 0f));
         registerLoop(GauntletPoseType.SPRAY_CHANNEL, 3, 3, fp(-0.06f, 0f, -0.10f, -6f),
-                part(GauntletPose.Part.RIGHT_ARM, -60f, 0f, -15f),
+                part(GauntletPose.Part.LEFT_ARM, -60f, 0f, -15f),
                 part(GauntletPose.Part.BODY, 6f, 0f, 0f));
         register(GauntletPoseType.FADE, 6, 1, 4, fp(0f, 0f, 0.12f, 0f),
                 part(GauntletPose.Part.BODY, 18f, 0f, 0f),
@@ -118,11 +131,11 @@ public final class GauntletPoses {
                 part(GauntletPose.Part.LEFT_ARM, 0f, 0f, -70f),
                 part(GauntletPose.Part.BODY, -5f, 0f, 0f));
         register(GauntletPoseType.FLUX_SLAM, 12, 2, 8, fp(0.05f, -0.10f, 0.16f, 18f),
-                part(GauntletPose.Part.BODY, 0f, 0f, 0f, 0f, 3f, 0f),
-                part(GauntletPose.Part.RIGHT_ARM, -60f, 0f, 0f),
-                part(GauntletPose.Part.LEFT_ARM, 30f, 0f, 0f),
-                part(GauntletPose.Part.RIGHT_LEG, -35f, 0f, 0f),
-                part(GauntletPose.Part.LEFT_LEG, 35f, 0f, 0f));
+                part(GauntletPose.Part.BODY, 10f, 0f, 0f, 0f, 2f, 0f),
+                part(GauntletPose.Part.RIGHT_ARM, -30f, 0f, 0f),
+                part(GauntletPose.Part.LEFT_ARM, 30f, 0f, -20f),
+                part(GauntletPose.Part.RIGHT_LEG, -20f, 0f, 0f),
+                part(GauntletPose.Part.LEFT_LEG, 20f, 0f, 0f));
     }
 
     private GauntletPoses() {}
