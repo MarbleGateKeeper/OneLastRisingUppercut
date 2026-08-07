@@ -8,7 +8,6 @@ import dev.marblegate.olru.common.attachment.skill.ConditionalChargeState;
 import dev.marblegate.olru.common.attachment.skill.CooldownSkillState;
 import dev.marblegate.olru.common.core.FinalAnswerEffectTracker;
 import dev.marblegate.olru.common.core.GauntletEffectBroadcaster;
-import dev.marblegate.olru.common.core.GauntletParticleHelper;
 import dev.marblegate.olru.common.core.GauntletSoundHelper;
 import dev.marblegate.olru.common.entity.BioticOrbEntity;
 import dev.marblegate.olru.common.item.tooltip.GauntletTooltipHelper;
@@ -106,17 +105,24 @@ public class FinalAnswerGauntletItem extends AbstractGauntletItem {
             target.hurt(OLRUDamageTypes.finalAnswerBioticGrasp(serverLevel, player), (float) cfg.damage.getAsDouble());
             player.heal((float) cfg.selfHeal.getAsDouble());
             addEnergy(player, (float) cfg.energyPerHit.getAsDouble());
-            GauntletParticleHelper.coloredTrail(player, hitCenter, cfg.range.get(), 0xB04AD8);
-            serverLevel.sendParticles(ParticleTypes.WITCH, hitCenter.x, hitCenter.y, hitCenter.z, 3, 0.2, 0.25, 0.2, 0.02);
             if (ticksHeld % (interval * 2) == 0) {
                 GauntletSoundHelper.graspHit(serverLevel, hitCenter);
             }
+            // TTL outlives the pulse gap so the beam stays up between pulses.
+            GauntletEffectBroadcaster.graspTether(player, target, hitCenter, interval + 2);
+        } else {
+            GauntletEffectBroadcaster.stopGraspTether(player);
         }
         GauntletEffectBroadcaster.pose(player, GauntletPoseType.GRASP_FIRE, 0, 4);
     }
 
     @Override
-    public void onStopUsing(ItemStack stack, LivingEntity entity, int count) {}
+    public void onStopUsing(ItemStack stack, LivingEntity entity, int count) {
+        // The grasp does not pin movement, so the base onStopUsing (gravity reset) stays skipped.
+        if (!entity.level().isClientSide() && entity instanceof ServerPlayer player) {
+            GauntletEffectBroadcaster.stopGraspTether(player);
+        }
+    }
 
     @Override
     public void performSkillOne(ServerPlayer player, float chargePercent) {
@@ -179,6 +185,7 @@ public class FinalAnswerGauntletItem extends AbstractGauntletItem {
             healed += Math.max(0f, target.getHealth() - before);
             target.addEffect(new MobEffectInstance(
                     MobEffects.REGENERATION, cfg.lingerTicks.get(), cfg.lingerAmplifier.get(), false, false, false));
+            GauntletEffectBroadcaster.bioticSprayContact(player, target, interval + 2);
         }
         if (healed > 0f) {
             addCoalescenceCharge(player, healed * (float) (cfg.ultChargePercentPerHeal.get() / 100.0));
@@ -223,17 +230,13 @@ public class FinalAnswerGauntletItem extends AbstractGauntletItem {
         Vec3 origin = player.getEyePosition().add(look.scale(0.4));
         DustParticleOptions dust = new DustParticleOptions(0xFFD75A, 0.8f);
         RandomSource random = level.getRandom();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 4; i++) {
             double dist = 0.6 + random.nextDouble() * range * 0.6;
             Vec3 p = origin.add(look.scale(dist)).add(
                     (random.nextDouble() - 0.5) * 0.5,
                     (random.nextDouble() - 0.5) * 0.4,
                     (random.nextDouble() - 0.5) * 0.5);
             level.sendParticles(dust, p.x, p.y, p.z, 1, 0.03, 0.03, 0.03, 0.0);
-        }
-        if (random.nextInt(3) == 0) {
-            Vec3 p = origin.add(look.scale(1.0 + random.nextDouble() * range * 0.4));
-            level.sendParticles(ParticleTypes.HAPPY_VILLAGER, p.x, p.y, p.z, 1, 0.15, 0.15, 0.15, 0.0);
         }
     }
 }

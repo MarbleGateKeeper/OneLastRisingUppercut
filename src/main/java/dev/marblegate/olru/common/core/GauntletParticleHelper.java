@@ -1,5 +1,6 @@
 package dev.marblegate.olru.common.core;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -10,6 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,7 +93,7 @@ public final class GauntletParticleHelper {
         Vec3 endpoint = hitCenter != null ? hitCenter : origin.add(dir.scale(range));
         double dist = origin.distanceTo(endpoint);
         DustParticleOptions dust = new DustParticleOptions(rgbColor, 0.8f);
-        for (double d = 0.5; d <= dist; d += 0.6) {
+        for (double d = 0.5; d <= dist; d += 1.2) {
             Vec3 p = origin.add(dir.scale(d));
             level.sendParticles(dust, p.x, p.y, p.z, 1, 0.04, 0.04, 0.04, 0.0);
         }
@@ -131,13 +133,13 @@ public final class GauntletParticleHelper {
     /** Purple dust ring expanding from a Hypersphere implosion. */
     public static void hypersphereImplosion(ServerLevel level, Vec3 pos, double radius) {
         DustParticleOptions dust = new DustParticleOptions(0x9B4DFF, 1.1f);
-        for (int i = 0; i < 16; i++) {
-            double angle = i * Math.PI * 2.0 / 16;
+        for (int i = 0; i < 8; i++) {
+            double angle = i * Math.PI * 2.0 / 8;
             level.sendParticles(dust,
                     pos.x + Math.cos(angle) * radius * 0.6, pos.y, pos.z + Math.sin(angle) * radius * 0.6,
                     1, 0.05, 0.05, 0.05, 0.0);
         }
-        level.sendParticles(dust, pos.x, pos.y, pos.z, 8, 0.2, 0.2, 0.2, 0.02);
+        level.sendParticles(dust, pos.x, pos.y, pos.z, 4, 0.2, 0.2, 0.2, 0.02);
     }
 
     /** Tight purple freeze-burst where the Experimental Barrier annihilates a projectile. */
@@ -191,6 +193,7 @@ public final class GauntletParticleHelper {
     /** Rising purple spiral where a Gravitic Flux target is lifted. */
     public static void fluxLift(ServerLevel level, Vec3 pos, double liftHeight) {
         DustParticleOptions dust = new DustParticleOptions(0x9B4DFF, 1.0f);
+        BlockParticleOption debris = surfaceDebris(level, pos);
         int points = 12;
         for (int i = 0; i < points; i++) {
             double t = (double) i / (points - 1);
@@ -198,6 +201,18 @@ public final class GauntletParticleHelper {
             level.sendParticles(dust,
                     pos.x + Math.cos(angle) * 0.5, pos.y + 0.2 + t * liftHeight, pos.z + Math.sin(angle) * 0.5,
                     1, 0.05, 0.05, 0.05, 0.0);
+            if (i % 3 == 0) {
+                level.sendParticles(
+                        debris,
+                        pos.x + Math.cos(angle) * 0.65,
+                        pos.y + 0.15 + t * liftHeight * 0.45,
+                        pos.z + Math.sin(angle) * 0.65,
+                        0,
+                        -Math.cos(angle) * 0.025,
+                        0.08,
+                        -Math.sin(angle) * 0.025,
+                        1.0);
+            }
         }
     }
 
@@ -206,11 +221,51 @@ public final class GauntletParticleHelper {
         DustParticleOptions dust = new DustParticleOptions(0x9B4DFF, 1.2f);
         for (int i = 0; i < 24; i++) {
             double angle = i * Math.PI * 2.0 / 24;
+            Vec3 point = pos.add(Math.cos(angle) * radius * 0.8, 0.1, Math.sin(angle) * radius * 0.8);
             level.sendParticles(dust,
-                    pos.x + Math.cos(angle) * radius * 0.8, pos.y + 0.4, pos.z + Math.sin(angle) * radius * 0.8,
+                    point.x, point.y + 0.3, point.z,
                     1, 0.05, 0.35, 0.05, 0.0);
+            if (i % 2 == 0) {
+                BlockParticleOption debris = surfaceDebris(level, point);
+                level.sendParticles(
+                        debris,
+                        point.x,
+                        point.y,
+                        point.z,
+                        0,
+                        Math.cos(angle) * 0.16,
+                        0.22,
+                        Math.sin(angle) * 0.16,
+                        1.0);
+            }
         }
         level.sendParticles(ParticleTypes.EXPLOSION, pos.x, pos.y + 0.5, pos.z, 2, radius * 0.3, 0.3, radius * 0.3, 0.0);
         level.sendParticles(dust, pos.x, pos.y + 0.5, pos.z, 16, radius * 0.5, 0.4, radius * 0.5, 0.02);
+    }
+
+    /** Compact terrain-colored burst for each target's individual Gravitic Flux landing. */
+    public static void fluxTargetImpact(ServerLevel level, Vec3 pos) {
+        BlockParticleOption debris = surfaceDebris(level, pos);
+        level.sendParticles(debris, pos.x, pos.y + 0.08, pos.z, 18, 0.35, 0.08, 0.35, 0.18);
+        level.sendParticles(
+                new DustParticleOptions(0xD9CCFF, 1.0f),
+                pos.x,
+                pos.y + 0.18,
+                pos.z,
+                8,
+                0.28,
+                0.12,
+                0.28,
+                0.04);
+    }
+
+    private static BlockParticleOption surfaceDebris(ServerLevel level, Vec3 pos) {
+        BlockPos origin = BlockPos.containing(pos.x, pos.y + 0.1, pos.z);
+        for (int down = 0; down <= 4; down++) {
+            BlockPos candidate = origin.below(down);
+            BlockState state = level.getBlockState(candidate);
+            if (!state.isAir()) return new BlockParticleOption(ParticleTypes.BLOCK, state);
+        }
+        return new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState());
     }
 }

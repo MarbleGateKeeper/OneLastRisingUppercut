@@ -66,6 +66,7 @@ public class BioticOrbEntity extends Projectile {
         Vec3 before = position();
         move(MoverType.SELF, delta);
         if (horizontalCollision || verticalCollision) {
+            GauntletEffectBroadcaster.bioticOrbBounce(this, position());
             Vec3 moved = position().subtract(before);
             setDeltaMovement(
                     Math.abs(moved.x - delta.x) > 1.0E-7 ? -delta.x : delta.x,
@@ -92,10 +93,11 @@ public class BioticOrbEntity extends Projectile {
     }
 
     private void spawnTrail(ServerLevel level) {
+        if (age % 3 != 0) return;
         RandomSource random = level.getRandom();
         level.sendParticles(new DustParticleOptions(PURPLE, 0.9f),
                 getX(), getY() + getBbHeight() * 0.5, getZ(),
-                1 + random.nextInt(2), 0.08, 0.08, 0.08, 0.0);
+                1, 0.05, 0.05, 0.05, 0.0);
     }
 
     private void pulse(ServerLevel level, BioticOrbConfig cfg) {
@@ -133,7 +135,8 @@ public class BioticOrbEntity extends Projectile {
 
     private void burst(ServerLevel level) {
         Vec3 pos = position();
-        level.sendParticles(new DustParticleOptions(PURPLE, 1.2f), pos.x, pos.y, pos.z, 24, 0.3, 0.3, 0.3, 0.08);
+        GauntletEffectBroadcaster.bioticOrbBurst(this, pos);
+        level.sendParticles(new DustParticleOptions(PURPLE, 1.2f), pos.x, pos.y, pos.z, 8, 0.2, 0.2, 0.2, 0.04);
         discard();
     }
 }

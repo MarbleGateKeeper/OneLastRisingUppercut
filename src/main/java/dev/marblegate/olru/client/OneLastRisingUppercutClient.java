@@ -4,6 +4,8 @@ import dev.marblegate.olru.client.animation.ClientFirstPersonAnimator;
 import dev.marblegate.olru.client.animation.ClientGauntletAnimations;
 import dev.marblegate.olru.client.effect.ClientCameraEffects;
 import dev.marblegate.olru.client.effect.ClientGauntletEffects;
+import dev.marblegate.olru.client.effect.ClientGravityLensing;
+import dev.marblegate.olru.client.effect.GauntletVfx;
 import dev.marblegate.olru.client.hud.FadeVignetteRenderer;
 import dev.marblegate.olru.client.hud.GauntletHudRenderer;
 import dev.marblegate.olru.client.hud.SedationOverlayRenderer;
@@ -30,6 +32,7 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.neoforged.neoforge.client.event.RenderArmEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
@@ -46,8 +49,10 @@ public class OneLastRisingUppercutClient {
         modEventBus.addListener(this::registerEntityRenderers);
         modEventBus.addListener(this::addEntityRenderLayers);
         modEventBus.addListener(this::registerRenderStateModifiers);
+        modEventBus.addListener(this::registerRenderPipelines);
         NeoForge.EVENT_BUS.addListener(this::onClientTick);
         NeoForge.EVENT_BUS.addListener(this::onRenderLevelStage);
+        NeoForge.EVENT_BUS.addListener(this::onRenderLevelAfter);
         NeoForge.EVENT_BUS.addListener(this::onRenderArm);
         NeoForge.EVENT_BUS.addListener(ClientFirstPersonAnimator::onRenderHand);
         NeoForge.EVENT_BUS.addListener(ClientCameraEffects::onComputeFov);
@@ -87,6 +92,7 @@ public class OneLastRisingUppercutClient {
         ClientGauntletEffects.tick();
         ClientGauntletAnimations.tick();
         ClientCameraEffects.tick();
+        ClientGravityLensing.tick();
         AxiomBarrierRenderer.tick();
         if (mc.player == null || mc.level == null) {
             ClientMovementInteractionState.clear();
@@ -103,6 +109,15 @@ public class OneLastRisingUppercutClient {
 
     private void onRenderLevelStage(RenderLevelStageEvent.AfterTranslucentBlocks event) {
         ClientGauntletEffects.renderWorld(event);
+    }
+
+    private void onRenderLevelAfter(RenderLevelStageEvent.AfterLevel event) {
+        ClientGravityLensing.render(event);
+    }
+
+    private void registerRenderPipelines(RegisterRenderPipelinesEvent event) {
+        ClientGravityLensing.registerPipelines(event);
+        GauntletVfx.registerPipelines(event);
     }
 
     private void onRenderArm(RenderArmEvent event) {

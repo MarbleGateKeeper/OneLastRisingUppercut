@@ -160,9 +160,13 @@ public class FinalAnswerEffectTracker {
                 float before = target.getHealth();
                 target.heal((float) cfg.allyHealPerPulse.getAsDouble());
                 healedTotal += Math.max(0f, target.getHealth() - before);
+                GauntletEffectBroadcaster.coalescenceContact(
+                        player, target, true, cfg.pulseIntervalTicks.get() + 2);
             } else {
                 target.hurt(OLRUDamageTypes.finalAnswerCoalescence(level, player),
                         (float) cfg.enemyDamagePerPulse.getAsDouble());
+                GauntletEffectBroadcaster.coalescenceContact(
+                        player, target, false, cfg.pulseIntervalTicks.get() + 2);
             }
         }
 

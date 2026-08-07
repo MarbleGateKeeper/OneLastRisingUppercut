@@ -14,7 +14,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public class OLRUNetwork {
     public static void onRegisterPayloads(RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar("9");
+        final PayloadRegistrar registrar = event.registrar("11");
 
         registrar.playToServer(
                 ServerboundGauntletSkillPayload.TYPE,

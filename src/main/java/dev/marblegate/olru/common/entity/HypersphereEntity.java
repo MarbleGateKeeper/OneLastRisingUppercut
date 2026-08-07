@@ -1,5 +1,6 @@
 package dev.marblegate.olru.common.entity;
 
+import dev.marblegate.olru.common.core.GauntletEffectBroadcaster;
 import dev.marblegate.olru.common.core.GauntletParticleHelper;
 import dev.marblegate.olru.common.core.GauntletSoundHelper;
 import dev.marblegate.olru.common.registry.OLRUDamageTypes;
@@ -49,7 +50,9 @@ public class HypersphereEntity extends Projectile {
         sphere.launchDelayTicks = launchDelayTicks;
         // Safety net: even a sphere that somehow never moved is discarded after outliving its
         // expected flight time.
-        sphere.maxLifetimeTicks = (int) (cfg.range.get() / cfg.speed.get()) + 40;
+        sphere.maxLifetimeTicks = Math.max(0, launchDelayTicks)
+                + (int) (cfg.range.get() / cfg.speed.get())
+                + 40;
         if (launchDelayTicks == 0) {
             sphere.setDeltaMovement(sphere.launchDirection.scale(cfg.speed.get()));
         }
@@ -99,7 +102,16 @@ public class HypersphereEntity extends Projectile {
         }
 
         if (launchDelayTicks > 0) {
-            // Second sphere of a pair: hover in place until its launch tick.
+            // Second sphere of a pair: stay attached to the living caster and sample their latest
+            // server-side aim. The first sphere is already independent and never steers.
+            Entity owner = getOwner();
+            if (!(owner instanceof LivingEntity living) || !living.isAlive()) {
+                discard();
+                return;
+            }
+            Vec3 latestDirection = living.getLookAngle().normalize();
+            if (latestDirection.lengthSqr() > 1.0E-8) launchDirection = latestDirection;
+            setPos(living.getEyePosition());
             launchDelayTicks--;
             setDeltaMovement(Vec3.ZERO);
             if (launchDelayTicks == 0) {
@@ -181,6 +193,7 @@ public class HypersphereEntity extends Projectile {
             target.hurt(OLRUDamageTypes.axiomHypersphereImplosion(level, ownerPlayer),
                     (float) cfg.implosionDamage.getAsDouble());
         }
+        GauntletEffectBroadcaster.hyperspherePulse(level, pos, (float) radius);
         GauntletParticleHelper.hypersphereImplosion(level, pos, radius);
         GauntletSoundHelper.hypersphereImplode(level, pos);
         discard();

@@ -67,7 +67,18 @@ public record ClientboundGauntletEffectPayload(
         COALESCENCE_BEAM(11),
         FADE(12),
         GRAVITIC_ZONE(13),
-        KINETIC_GRASP_FIELD(14);
+        KINETIC_GRASP_FIELD(14),
+        GRASP_TETHER(15),
+        HYPERSPHERE_PULSE(16),
+        FLUX_FIELD(17),
+        FLUX_TARGET(18),
+        FLUX_SLAM_RING(19),
+        BIOTIC_SPRAY_CONTACT(20),
+        COALESCENCE_CONTACT(21),
+        BIOTIC_ORB_BOUNCE(22),
+        BIOTIC_ORB_BURST(23),
+        KINETIC_GRASP_ABSORB(24),
+        FLUX_TARGET_IMPACT(25);
 
         private final byte networkId;
 

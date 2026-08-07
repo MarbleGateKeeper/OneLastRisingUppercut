@@ -6,6 +6,7 @@ import dev.marblegate.olru.common.entity.BioticOrbEntity;
 import dev.marblegate.olru.common.util.GauntletHelper;
 import dev.marblegate.olru.config.KineticGraspConfig;
 import dev.marblegate.olru.config.OLRUConfig;
+import java.util.function.Consumer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -47,16 +48,32 @@ public final class AxiomAbsorptionHelper {
      * returns the total Kinetic Grasp credit (ignored by the Experimental Barrier).
      */
     public static int absorbZone(ServerLevel level, AABB zone, ServerPlayer defender) {
+        return absorbZone(level, zone, defender, null);
+    }
+
+    /**
+     * Absorbs projectiles and optionally reports their final position and weight before they are
+     * discarded. Kinetic Grasp uses the observer for hand-bound intake trails; barriers pass none.
+     */
+    public static int absorbZone(
+            ServerLevel level,
+            AABB zone,
+            ServerPlayer defender,
+            Consumer<AbsorbedProjectile> observer) {
         int credit = 0;
         var cfg = OLRUConfig.THE_AXIOM.KINETIC_GRASP;
         for (Projectile projectile : level.getEntitiesOfClass(Projectile.class, zone,
                 e -> isAbsorbableProjectile(e, defender))) {
             Vec3 pos = projectile.position().add(0, projectile.getBbHeight() * 0.5, 0);
+            boolean heavy = isHeavyProjectile(projectile);
             GauntletParticleHelper.barrierAbsorbBurst(level, pos);
             GauntletSoundHelper.barrierAbsorb(level, pos);
+            if (observer != null) observer.accept(new AbsorbedProjectile(pos, heavy));
             projectile.discard();
             credit += absorbCreditFor(projectile, cfg);
         }
         return credit;
     }
+
+    public record AbsorbedProjectile(Vec3 position, boolean heavy) {}
 }

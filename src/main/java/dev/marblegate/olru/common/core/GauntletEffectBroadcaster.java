@@ -13,6 +13,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 public class GauntletEffectBroadcaster {
     private static final double DEFAULT_RANGE_SQR = 96.0 * 96.0;
+    public static final int FLUX_TARGET_LIFT = 1;
+    public static final int FLUX_TARGET_FALL = 2;
 
     public static void rocketCharge(ServerPlayer player, float chargePercent, int durationTicks) {
         broadcast(player.level(), player.position(), new ClientboundGauntletEffectPayload(
@@ -70,6 +72,39 @@ public class GauntletEffectBroadcaster {
         broadcast(caster.level(), pos, payload);
     }
 
+    /**
+     * Gravitic Flux phase field: 1 = RISING (on the caster, no radius), 2 = AIMING (zone decal),
+     * 3 = SLAM one-shot. Phases 1/2 are TTL-refreshed every tick; phase 3 fires once with ttl 0.
+     */
+    public static void fluxField(ServerPlayer caster, int phase, Vec3 pos, float radius, int ttl) {
+        ClientboundGauntletEffectPayload payload = new ClientboundGauntletEffectPayload(
+                EffectType.FLUX_FIELD, caster.getId(), -1, pos,
+                phase, radius, ttl, true);
+        PacketDistributor.sendToPlayer(caster, payload);
+        broadcast(caster.level(), pos, payload);
+    }
+
+    public static void stopFluxField(ServerPlayer caster) {
+        ClientboundGauntletEffectPayload payload = new ClientboundGauntletEffectPayload(
+                EffectType.FLUX_FIELD, caster.getId(), -1, caster.position(),
+                0f, 0f, 0, false);
+        PacketDistributor.sendToPlayer(caster, payload);
+        broadcast(caster.level(), caster.position(), payload);
+    }
+
+    /** Per-target Gravitic Flux state; phase is LIFT or FALL and is TTL-refreshed every tick. */
+    public static void fluxTarget(ServerPlayer caster, Entity target, int phase, int ttl) {
+        broadcast(caster.level(), target.position(), new ClientboundGauntletEffectPayload(
+                EffectType.FLUX_TARGET, caster.getId(), target.getId(), target.position(),
+                phase, 0f, ttl, true));
+    }
+
+    public static void stopFluxTarget(ServerPlayer caster, Entity target) {
+        broadcast(caster.level(), target.position(), new ClientboundGauntletEffectPayload(
+                EffectType.FLUX_TARGET, caster.getId(), target.getId(), target.position(),
+                0f, 0f, 0, false));
+    }
+
     public static void fieldExtractionBeam(ServerPlayer player, Entity target, int durationTicks) {
         broadcast(player.level(), player.position(), new ClientboundGauntletEffectPayload(
                 EffectType.FIELD_EXTRACTION_BEAM, player.getId(), target.getId(), target.position(),
@@ -81,6 +116,26 @@ public class GauntletEffectBroadcaster {
         broadcast(level, orb.position(), new ClientboundGauntletEffectPayload(
                 EffectType.ORB_TETHER, orb.getId(), target.getId(), orb.position(),
                 0f, 0f, durationTicks, true));
+    }
+
+    /**
+     * Biotic Grasp damage beam from the casting player to the current hit point; TTL-refreshed
+     * on every grasp pulse so it dies on its own shortly after the channel stops.
+     */
+    public static void graspTether(ServerPlayer player, Entity target, Vec3 hitCenter, int ttl) {
+        ClientboundGauntletEffectPayload payload = new ClientboundGauntletEffectPayload(
+                EffectType.GRASP_TETHER, player.getId(), target.getId(), hitCenter,
+                0f, 0f, ttl, true);
+        PacketDistributor.sendToPlayer(player, payload);
+        broadcast(player.level(), hitCenter, payload);
+    }
+
+    public static void stopGraspTether(ServerPlayer player) {
+        ClientboundGauntletEffectPayload payload = new ClientboundGauntletEffectPayload(
+                EffectType.GRASP_TETHER, player.getId(), -1, player.position(),
+                0f, 0f, 0, false);
+        PacketDistributor.sendToPlayer(player, payload);
+        broadcast(player.level(), player.position(), payload);
     }
 
     public static void sedated(Entity target, int durationTicks, boolean active) {
@@ -141,6 +196,44 @@ public class GauntletEffectBroadcaster {
                 0f, 0f, 0, false));
     }
 
+    public static void bioticSprayContact(ServerPlayer caster, Entity target, int durationTicks) {
+        broadcast(caster.level(), target.position(), new ClientboundGauntletEffectPayload(
+                EffectType.BIOTIC_SPRAY_CONTACT, caster.getId(), target.getId(), target.position(),
+                0f, 0f, durationTicks, true));
+    }
+
+    public static void coalescenceContact(ServerPlayer caster, Entity target, boolean healing, int durationTicks) {
+        broadcast(caster.level(), target.position(), new ClientboundGauntletEffectPayload(
+                EffectType.COALESCENCE_CONTACT, caster.getId(), target.getId(), target.position(),
+                healing ? 1f : -1f, 0f, durationTicks, true));
+    }
+
+    public static void bioticOrbBounce(Entity orb, Vec3 pos) {
+        if (!(orb.level() instanceof ServerLevel level)) return;
+        broadcast(level, pos, new ClientboundGauntletEffectPayload(
+                EffectType.BIOTIC_ORB_BOUNCE, orb.getId(), -1, pos,
+                0f, 0f, 8, true));
+    }
+
+    public static void bioticOrbBurst(Entity orb, Vec3 pos) {
+        if (!(orb.level() instanceof ServerLevel level)) return;
+        broadcast(level, pos, new ClientboundGauntletEffectPayload(
+                EffectType.BIOTIC_ORB_BURST, orb.getId(), -1, pos,
+                0f, 0f, 14, true));
+    }
+
+    public static void kineticGraspAbsorb(ServerPlayer caster, Vec3 projectilePos, boolean heavy) {
+        broadcast(caster.level(), projectilePos, new ClientboundGauntletEffectPayload(
+                EffectType.KINETIC_GRASP_ABSORB, caster.getId(), -1, projectilePos,
+                heavy ? 1f : 0f, 0f, heavy ? 10 : 7, true));
+    }
+
+    public static void fluxTargetImpact(ServerPlayer caster, Entity target, Vec3 pos) {
+        broadcast(caster.level(), pos, new ClientboundGauntletEffectPayload(
+                EffectType.FLUX_TARGET_IMPACT, caster.getId(), target.getId(), pos,
+                Math.max(0.5f, target.getBbWidth()), 0f, 14, true));
+    }
+
     public static void rocketPunchImpact(ServerLevel level, Vec3 pos, float intensity) {
         broadcast(level, pos, new ClientboundGauntletEffectPayload(
                 EffectType.ROCKET_PUNCH_IMPACT, -1, -1, pos,
@@ -150,6 +243,18 @@ public class GauntletEffectBroadcaster {
     public static void seismicSlamRing(ServerLevel level, Vec3 pos, float radius) {
         broadcast(level, pos, new ClientboundGauntletEffectPayload(
                 EffectType.SEISMIC_SLAM_RING, -1, -1, pos,
+                radius, 0f, 14, true));
+    }
+
+    public static void hyperspherePulse(ServerLevel level, Vec3 pos, float radius) {
+        broadcast(level, pos, new ClientboundGauntletEffectPayload(
+                EffectType.HYPERSPHERE_PULSE, -1, -1, pos,
+                radius, 0f, 12, true));
+    }
+
+    public static void fluxSlamRing(ServerLevel level, Vec3 center, float radius) {
+        broadcast(level, center, new ClientboundGauntletEffectPayload(
+                EffectType.FLUX_SLAM_RING, -1, -1, center,
                 radius, 0f, 14, true));
     }
 

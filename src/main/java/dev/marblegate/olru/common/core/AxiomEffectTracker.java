@@ -103,6 +103,7 @@ public class AxiomEffectTracker {
                 MovementTaskProperties.playerActive(player.getUUID()));
         FLUXES.put(player.getUUID(), new FluxState(FluxPhase.RISING, riseTicks));
         refreshFluxPose(player);
+        GauntletParticleHelper.fluxLift(player.level(), player.position(), cfg.riseHeight.get());
         GauntletSoundHelper.fluxRise(player.level(), player.position());
     }
 
@@ -169,7 +170,12 @@ public class AxiomEffectTracker {
         var cfg = OLRUConfig.THE_AXIOM.KINETIC_GRASP;
         ServerLevel level = player.level();
         player.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 10, cfg.selfSlowAmplifier.get(), false, false, false));
-        state.accumulatedShield += AxiomAbsorptionHelper.absorbZone(level, graspZone(player, cfg), player);
+        state.accumulatedShield += AxiomAbsorptionHelper.absorbZone(
+                level,
+                graspZone(player, cfg),
+                player,
+                absorbed -> GauntletEffectBroadcaster.kineticGraspAbsorb(
+                        player, absorbed.position(), absorbed.heavy()));
         GauntletEffectBroadcaster.kineticGraspField(player, 4);
         GauntletEffectBroadcaster.pose(player, GauntletPoseType.KINETIC_GRASP, 0, 4);
 
@@ -223,6 +229,7 @@ public class AxiomEffectTracker {
         var cfg = OLRUConfig.THE_AXIOM.GRAVITIC_FLUX;
         switch (state.phase) {
             case RISING -> {
+                GauntletEffectBroadcaster.fluxField(player, 1, player.position(), 0f, 4);
                 if (--state.ticksRemaining <= 0) {
                     state.phase = FluxPhase.AIMING;
                     state.ticksRemaining = cfg.aimTicks.get();
@@ -238,8 +245,10 @@ public class AxiomEffectTracker {
                     player.hurtMarked = true;
                     player.resetFallDistance();
                 }
-                GauntletEffectBroadcaster.graviticZone(
-                        player, groundProjection(player), (float) cfg.zoneRadius.getAsDouble(), 4);
+                Vec3 zoneCenter = groundProjection(player);
+                float zoneRadius = (float) cfg.zoneRadius.getAsDouble();
+                GauntletEffectBroadcaster.graviticZone(player, zoneCenter, zoneRadius, 4);
+                GauntletEffectBroadcaster.fluxField(player, 2, zoneCenter, zoneRadius, 4);
                 if (--state.ticksRemaining <= 0) {
                     confirmAim(player);
                 }
@@ -256,6 +265,8 @@ public class AxiomEffectTracker {
         state.ticksRemaining = cfg.suspendTicks.get();
         state.zoneCenter = zoneCenter;
         GauntletEffectBroadcaster.stopGraviticZone(player, zoneCenter);
+        // The AIMING field decal gives way to per-target lenses for the lift.
+        GauntletEffectBroadcaster.stopFluxField(player);
         refreshFluxPose(player);
 
         double radius = cfg.zoneRadius.get();
@@ -287,7 +298,12 @@ public class AxiomEffectTracker {
             if (lastTick) {
                 target.setNoGravity(false);
                 target.resetFallDistance(); // the slam is the damage, not the fall
-            } else if (!MovementManager.hasTask(target)) {
+                GauntletEffectBroadcaster.fluxTarget(
+                        player, target, GauntletEffectBroadcaster.FLUX_TARGET_FALL, 4);
+            } else {
+                GauntletEffectBroadcaster.fluxTarget(
+                        player, target, GauntletEffectBroadcaster.FLUX_TARGET_LIFT, 4);
+                if (MovementManager.hasTask(target)) continue;
                 // Suspension lock, re-asserted every tick so nothing escapes the lift.
                 // Skipped while the lift push is still flying the target upward.
                 target.setNoGravity(true);
@@ -316,12 +332,16 @@ public class AxiomEffectTracker {
                 continue;
             }
             if (!target.isAlive()) {
+                GauntletEffectBroadcaster.stopFluxTarget(player, target);
                 state.liftedTargets.remove(targetId);
                 continue;
             }
+            GauntletEffectBroadcaster.fluxTarget(
+                    player, target, GauntletEffectBroadcaster.FLUX_TARGET_FALL, 4);
             if (target.onGround() || timedOut) {
                 slamTarget(player, target, cfg);
                 fireSlamEffects(player, state, cfg);
+                GauntletEffectBroadcaster.stopFluxTarget(player, target);
                 state.liftedTargets.remove(targetId);
             }
         }
@@ -335,6 +355,8 @@ public class AxiomEffectTracker {
                 target.getMaxHealth() * cfg.slamMaxHealthFraction.get(), cfg.slamDamageCap.get());
         target.hurt(OLRUDamageTypes.axiomGraviticFlux(player.level(), player), damage);
         target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, cfg.slowTicks.get(), 1, false, false, false));
+        GauntletEffectBroadcaster.fluxTargetImpact(player, target, target.position());
+        GauntletParticleHelper.fluxTargetImpact(player.level(), target.position());
     }
 
     /** One-time ground-impact spectacle, fired when the first target lands (or immediately when nothing was lifted). */
@@ -345,7 +367,8 @@ public class AxiomEffectTracker {
         Vec3 center = state.zoneCenter != null ? state.zoneCenter : player.position();
         GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.FLUX_CHANNEL);
         GauntletEffectBroadcaster.pose(player, GauntletPoseType.FLUX_SLAM, 0, 20);
-        GauntletEffectBroadcaster.seismicSlamRing(level, center, (float) cfg.zoneRadius.getAsDouble());
+        GauntletEffectBroadcaster.fluxSlamRing(level, center, (float) cfg.zoneRadius.getAsDouble());
+        GauntletEffectBroadcaster.fluxField(player, 3, center, (float) cfg.zoneRadius.getAsDouble(), 0);
         GauntletParticleHelper.fluxSlamShock(level, center, cfg.zoneRadius.get());
         GauntletSoundHelper.fluxSlam(level, center);
     }
@@ -353,16 +376,18 @@ public class AxiomEffectTracker {
     private static void endFlux(ServerPlayer player, FluxState state) {
         FLUXES.remove(player.getUUID());
         player.setNoGravity(false);
-        releaseFluxTargets(player.level(), state);
+        releaseFluxTargets(player, state);
+        GauntletEffectBroadcaster.stopFluxField(player);
         GauntletEffectBroadcaster.stopGraviticZone(
                 player, state.zoneCenter != null ? state.zoneCenter : player.position());
         GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.FLUX_CHANNEL);
     }
 
-    private static void releaseFluxTargets(ServerLevel level, FluxState state) {
+    private static void releaseFluxTargets(ServerPlayer player, FluxState state) {
         for (UUID targetId : List.copyOf(state.liftedTargets)) {
-            if (level.getEntity(targetId) instanceof LivingEntity target) {
+            if (player.level().getEntity(targetId) instanceof LivingEntity target) {
                 target.setNoGravity(false);
+                GauntletEffectBroadcaster.stopFluxTarget(player, target);
             }
         }
         state.liftedTargets.clear();
@@ -433,7 +458,8 @@ public class AxiomEffectTracker {
         FluxState flux = FLUXES.remove(id);
         if (flux != null && entity instanceof ServerPlayer player) {
             player.setNoGravity(false);
-            releaseFluxTargets(player.level(), flux);
+            releaseFluxTargets(player, flux);
+            GauntletEffectBroadcaster.stopFluxField(player);
             GauntletEffectBroadcaster.stopGraviticZone(
                     player, flux.zoneCenter != null ? flux.zoneCenter : player.position());
             GauntletEffectBroadcaster.stopPose(player, GauntletPoseType.FLUX_CHANNEL);
