@@ -10,65 +10,82 @@ import dev.marblegate.olru.client.movement.task.ClientRocketPunchTask;
 import dev.marblegate.olru.client.movement.task.ClientSeismicSlamTask;
 import dev.marblegate.olru.common.attachment.GauntletSkillGroup;
 import dev.marblegate.olru.common.attachment.skill.SkillDisplayData;
+import dev.marblegate.olru.common.attachment.skill.SkillStateType;
 import dev.marblegate.olru.common.item.AbstractGauntletItem;
 import dev.marblegate.olru.common.item.FinalAnswerGauntletItem;
 import dev.marblegate.olru.common.item.LegacyOfHorusGauntletItem;
 import dev.marblegate.olru.common.item.LegacyPrimeGauntletItem;
+import dev.marblegate.olru.common.item.TheAxiomGauntletItem;
 import dev.marblegate.olru.network.payload.ServerboundGauntletSkillPayload.SkillType;
 import java.util.EnumMap;
 import java.util.Locale;
+import java.util.Map;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.neoforged.neoforge.client.gui.GuiLayer;
-import org.joml.Matrix3x2fStack;
 
-/**
- * Bottom-center gauntlet skill bar: an LMB slot, three skill slots and a larger ultimate
- * slot, all fully procedural (no textures). Icons come from {@link GauntletHudIcons};
- * cooldowns are a radial spoke sweep, conditional/energy skills get a progress ring around
- * the slot, firing a skill triggers a short "release pop" scale animation, and a slot
- * becoming usable flashes its border instead of breathing all the time.
- */
+/** A hotbar-width forged chassis with one weapon-status bay and four skill displays. */
 public class GauntletHudRenderer implements GuiLayer {
-    private static final int LMB_SLOT = 26;
-    private static final int NORMAL_SLOT = 26;
-    private static final int ULTIMATE_SLOT = 34;
-    private static final int LMB_GAP = 8;
-    private static final int SLOT_GAP = 5;
-    private static final int PIP_SIZE = 3;
-    private static final int PIP_GAP = 1;
-    private static final int KEY_LABEL_GAP = 1;
-    private static final int HUD_BOTTOM_OFFSET = 90;
-    private static final int SWEEP_SPOKES = 48;
-    private static final float POP_TICKS = 5f;
-    private static final float READY_FLASH_TICKS = 16f;
-    private static final float READY_FLASH_FULL_TICKS = 8f;
-    private static final float DIM_FACTOR = 0.45f;
-    private static final float ICON_DIM_FACTOR = 0.7f;
+    private static final int PANEL_WIDTH = 182;
+    private static final int PANEL_HEIGHT = 44;
+    private static final int HUD_BOTTOM_OFFSET = 96;
 
-    private static final int TOTAL_WIDTH = LMB_SLOT + LMB_GAP + NORMAL_SLOT * 3 + ULTIMATE_SLOT + SLOT_GAP * 3;
+    private static final int NORMAL_X = 10;
+    private static final int NORMAL_Y = 4;
+    private static final int NORMAL_WIDTH = 24;
+    private static final int NORMAL_HEIGHT = 27;
+    private static final int SKILL_ONE_X = 38;
+    private static final int SKILL_TWO_X = 68;
+    private static final int SKILL_THREE_X = 98;
+    private static final int ULTIMATE_X = 137;
+    private static final int SKILL_Y = 4;
+    private static final int ULTIMATE_Y = 2;
+    private static final int SLOT_SIZE = 27;
+    private static final int ULTIMATE_SIZE = 34;
+    private static final int ICON_SIZE = 16;
 
-    private static final int COLOR_SLOT_BG = 0xC00A0A14;
-    private static final int COLOR_TOP_HIGHLIGHT = 0x22FFFFFF;
-    private static final int COLOR_BOTTOM_SHADE = 0x33000000;
-    private static final int COLOR_TEXT = 0xFFEFEFEF;
-    private static final int COLOR_TEXT_SHADOW = 0x90000000;
-    private static final int COLOR_KEY_LABEL = 0xFF6A6A6A;
-    private static final int COLOR_COOLDOWN = 0x8C000000;
-    private static final int COLOR_EMPTY_PIP = 0xFF333333;
-    private static final int COLOR_ICON_SHADE = 0xFF6A6A6A;
-    private static final int COLOR_ICON_OUTLINE = 0xF0101014;
-    private static final int COLOR_BAR_BG = 0xDD050505;
+    private static final int REGULAR_BADGE_Y = 29;
+    private static final int ULTIMATE_BADGE_Y = 34;
+    private static final int KEY_BADGE_HEIGHT = 8;
+    private static final int ULTIMATE_RAIL_X = 10;
+    private static final int ULTIMATE_RAIL_Y = 38;
+    private static final int ULTIMATE_RAIL_WIDTH = 118;
+    private static final int ULTIMATE_RAIL_HEIGHT = 4;
+    private static final int SEGMENTS = 10;
 
-    private static final Theme PRIME_THEME = theme(0xFF3A2412, 0xFFFFA028, 0xFFFFC94A, 0xFFFFD75A);
-    private static final Theme HORUS_THEME = theme(0xFF122E36, 0xFF31E8FF, 0xFF9AEFFF, 0xFF7FE8C8);
-    private static final Theme FINAL_ANSWER_THEME = theme(0xFF28132F, 0xFFB04AD8, 0xFFE0A0FF, 0xFFD8A0EC);
-    private static final Theme NEUTRAL_THEME = theme(0xFF26262A, 0xFF9A9A9A, 0xFFCFCFCF, 0xFFB0B0B0);
+    private static final int PRESS_TICKS = 4;
+    private static final int READY_FLASH_TICKS = 12;
+    private static final int RESOURCE_TEXT_TICKS = 20;
+
+    private static final int COLOR_COOLDOWN = 0xC4000000;
+    private static final int COLOR_GROOVE = 0xEE050609;
+    private static final int COLOR_EMPTY = 0xFF202329;
+    private static final int COLOR_TEXT = 0xFFF2F2F2;
+    private static final int COLOR_TEXT_DIM = 0xFF747981;
+    private static final int COLOR_TEXT_SHADOW = 0xC0000000;
+    private static final int COLOR_ICON_DIM = 0xFF737373;
+
+    private static final SkillType[] ALL_SKILLS = SkillType.values();
+    private static final SkillType[] DISPLAY_SKILLS = {
+            SkillType.SKILL_ONE, SkillType.SKILL_TWO, SkillType.SKILL_THREE, SkillType.ULTIMATE
+    };
+
+    private static final Theme PRIME_THEME = theme(
+            "legacy_prime", 0xFF565C64, 0xFFFF8B26, 0xFFFFC75A, 0xFFE46B1F);
+    private static final Theme HORUS_THEME = theme(
+            "legacy_of_horus", 0xFF879397, 0xFF35DEEE, 0xFFF2D263, 0xFF64E1C5);
+    private static final Theme FINAL_ANSWER_THEME = theme(
+            "final_answer", 0xFF674B7A, 0xFFB84FE4, 0xFFFFD15B, 0xFFFFC843);
+    private static final Theme AXIOM_THEME = theme(
+            "the_axiom", 0xFF626880, 0xFF9E70FF, 0xFFE2DAFF, 0xFFB187FF);
+    private static final Theme NEUTRAL_THEME = theme(
+            "legacy_prime", 0xFF5B5F66, 0xFF9EA2A8, 0xFFD9D9D9, 0xFFB4B4B4);
 
     private final EnumMap<SkillType, SlotAnim> slotAnims = new EnumMap<>(SkillType.class);
     private Identifier lastGauntletId;
@@ -76,289 +93,467 @@ public class GauntletHudRenderer implements GuiLayer {
     @Override
     public void render(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.screen != null) return;
-        if (!(mc.player.getMainHandItem().getItem() instanceof AbstractGauntletItem gauntlet)) return;
+        if (mc.player == null || mc.screen != null || mc.options.hideGui) return;
+        if (!(mc.player.getMainHandItem().getItem() instanceof AbstractGauntletItem gauntlet)) {
+            clearAnimationState();
+            return;
+        }
 
         Identifier gauntletId = gauntlet.gauntletId();
         Theme theme = themeFor(gauntletId);
         float time = mc.player.tickCount + deltaTracker.getGameTimeDeltaPartialTick(true);
-
-        int startX = (guiGraphics.guiWidth() - TOTAL_WIDTH) / 2;
-        int startY = guiGraphics.guiHeight() - HUD_BOTTOM_OFFSET;
-
-        GauntletSkillGroup group = gauntlet.getSyncedSkillGroup(mc.player);
-        if (group == null) {
-            slotAnims.clear();
-            renderSyncPending(guiGraphics, mc.font, startX, startY, theme);
-            return;
-        }
+        int panelX = (guiGraphics.guiWidth() - PANEL_WIDTH) / 2;
+        int panelY = guiGraphics.guiHeight() - HUD_BOTTOM_OFFSET;
 
         if (!gauntletId.equals(lastGauntletId)) {
             lastGauntletId = gauntletId;
             slotAnims.clear();
         }
 
+        GauntletSkillGroup group = gauntlet.getSyncedSkillGroup(mc.player);
+        renderSprite(guiGraphics, theme.chassis(), panelX, panelY, PANEL_WIDTH, PANEL_HEIGHT,
+                group == null ? 0xFF686868 : 0xFFFFFFFF);
+        if (group == null) {
+            slotAnims.clear();
+            renderSyncPending(guiGraphics, mc.font, panelX, panelY, theme);
+            return;
+        }
+
+        EnumMap<SkillType, SkillDisplayData> displayData = new EnumMap<>(SkillType.class);
+        for (SkillType type : ALL_SKILLS) {
+            SkillDisplayData data = group.get(type).displayData();
+            displayData.put(type, data);
+            updateSlotAnim(type, data, time);
+        }
+
         boolean charging = mc.player.isUsingItem()
-                && mc.player.getUseItem().getItem() instanceof AbstractGauntletItem;
+                && mc.player.getUseItem().getItem() == gauntlet;
         float charge = 0f;
         if (charging) {
             int ticksHeld = gauntlet.getUseDuration(mc.player.getMainHandItem(), mc.player)
                     - mc.player.getUseItemRemainingTicks();
-            charge = Math.min(1f, (float) ticksHeld / gauntlet.getMaxChargeTicks());
+            charge = Math.min(1f, (float) ticksHeld / Math.max(1, gauntlet.getMaxChargeTicks()));
         }
 
-        int skillOneX = 0;
-        int x = startX;
-        for (SkillType type : SkillType.values()) {
-            int size = slotSize(type);
-            int y = startY + (ULTIMATE_SLOT - size);
-            if (type == SkillType.SKILL_ONE) skillOneX = x;
-            SkillDisplayData data = group.get(type).displayData();
-            renderSlot(guiGraphics, mc.font, x, y, size, type, data, theme, gauntletId,
-                    charging && type == SkillType.SKILL_ONE, isSkillActive(gauntlet, type, data), time);
-            x += size + gapAfter(type);
-        }
+        SkillDisplayData normal = displayData.get(SkillType.NORMAL_ATTACK);
+        SkillDisplayData skillOne = displayData.get(SkillType.SKILL_ONE);
+        SkillDisplayData ultimate = displayData.get(SkillType.ULTIMATE);
+        boolean normalActive = isSkillActive(gauntlet, SkillType.NORMAL_ATTACK, normal);
+        boolean skillOneActive = isSkillActive(gauntlet, SkillType.SKILL_ONE, skillOne);
+        boolean ultimateActive = isSkillActive(gauntlet, SkillType.ULTIMATE, ultimate);
 
-        if (charging && gauntlet.isChargeProgressMeaningful()) {
-            int skillOneY = startY + (ULTIMATE_SLOT - NORMAL_SLOT);
-            renderProgressRing(guiGraphics, skillOneX + NORMAL_SLOT / 2f, skillOneY + NORMAL_SLOT / 2f,
-                    ringRadius(NORMAL_SLOT), charge, theme.hot(), false);
+        renderUltimateRail(guiGraphics, panelX, panelY, ultimate, theme, ultimateActive, time);
+        renderSkillOneMeter(guiGraphics, mc.font, panelX, panelY, gauntlet, skillOne,
+                slotAnims.get(SkillType.SKILL_ONE), charging, charge, skillOneActive, theme, time);
+        renderNormalStatus(guiGraphics, mc.font, panelX, panelY, normal,
+                slotAnims.get(SkillType.NORMAL_ATTACK), theme, normalActive, time);
+
+        for (SkillType type : DISPLAY_SKILLS) {
+            SkillDisplayData data = displayData.get(type);
+            renderSkillSlot(guiGraphics, mc.font, panelX, panelY, type, data,
+                    slotAnims.get(type), theme,
+                    charging && type == SkillType.SKILL_ONE,
+                    type == SkillType.SKILL_ONE ? skillOneActive
+                            : type == SkillType.ULTIMATE ? ultimateActive : isSkillActive(gauntlet, type, data),
+                    time);
         }
     }
 
-    private void renderSlot(GuiGraphicsExtractor guiGraphics, Font font, int x, int y, int size,
-            SkillType type, SkillDisplayData data, Theme theme, Identifier gauntletId,
-            boolean charging, boolean active, float time) {
+    private void renderNormalStatus(GuiGraphicsExtractor guiGraphics, Font font,
+            int panelX, int panelY, SkillDisplayData data, SlotAnim anim,
+            Theme theme, boolean active, float time) {
+        int x = panelX + NORMAL_X;
+        int y = panelY + NORMAL_Y;
         boolean ready = data.usable();
-        SlotAnim anim = updateSlotAnim(type, data, time);
-        float popScale = popScale(anim, time);
+        int stateColor = stateColor(theme, SkillType.NORMAL_ATTACK);
+        renderStateFrame(guiGraphics, x, y, NORMAL_WIDTH, NORMAL_HEIGHT,
+                ready, active, false, false, stateColor, anim, time);
 
-        renderSlotFrame(guiGraphics, x, y, size, borderColor(theme, type, ready, active, charging, anim, time));
-
-        boolean dim = !ready && !active && !charging;
-        if (!dim) renderReadyUnderglow(guiGraphics, x, y, size, theme);
-
-        int iconMain = dim ? ARGB.scaleRGB(theme.icon(), ICON_DIM_FACTOR) : theme.icon();
-        int iconAccent = dim ? ARGB.scaleRGB(theme.accent(), ICON_DIM_FACTOR)
-                : active || charging ? theme.hot() : theme.accent();
-        int iconShade = dim ? ARGB.scaleRGB(COLOR_ICON_SHADE, ICON_DIM_FACTOR) : COLOR_ICON_SHADE;
-        int iconOutline = dim ? ARGB.scaleRGB(COLOR_ICON_OUTLINE, ICON_DIM_FACTOR) : COLOR_ICON_OUTLINE;
-        renderIcon(guiGraphics, gauntletId, type, x, y, size, iconMain, iconAccent, iconShade, iconOutline, popScale);
-
-        float centerX = x + size / 2f;
-        float centerY = y + size / 2f;
+        int pressOffset = pressOffset(anim, time);
         switch (data.mode()) {
-            case COOLDOWN -> renderCooldown(guiGraphics, font, x, y, size, data, centerX, centerY);
-            case INCREMENTAL_CHARGE, FULL_CHARGE -> renderAmmoPips(guiGraphics, x, y, size, data, theme);
-            case CONDITIONAL -> {
-                // Gate on remaining progress, not usable(): resource bars (Final Answer energy)
-                // are usable above zero but must still visualize their level while filling.
-                if (data.cdFraction() > 0f) {
-                    renderProgressRing(guiGraphics, centerX, centerY, ringRadius(size),
-                            1f - data.cdFraction(), theme.accent(), true);
+            case INCREMENTAL_CHARGE, FULL_CHARGE -> renderAmmoChamber(guiGraphics, font, panelX, panelY, data, theme, pressOffset);
+            case CONDITIONAL -> renderEnergyChamber(
+                    guiGraphics, font, panelX, panelY, data, anim, theme, active, time, pressOffset);
+            case COOLDOWN -> renderCooldown(guiGraphics, font,
+                    x + 2, y + 3, NORMAL_WIDTH - 4, 19, data, theme);
+            case RESOURCE_COOLDOWN -> {}
+        }
+
+        renderKeyBadge(guiGraphics, font, x + NORMAL_WIDTH / 2,
+                panelY + REGULAR_BADGE_Y + pressOffset, NORMAL_WIDTH - 2,
+                skillLabel(SkillType.NORMAL_ATTACK), ready, active, false, stateColor);
+    }
+
+    private void renderAmmoChamber(GuiGraphicsExtractor guiGraphics, Font font,
+            int panelX, int panelY, SkillDisplayData data, Theme theme, int pressOffset) {
+        int max = data.maxCharges();
+        if (max <= 0) return;
+        if (max > 8) {
+            String text = data.currentCharges() + "/" + max;
+            int textWidth = font.width(text);
+            int centerX = Math.clamp(panelX + NORMAL_X + NORMAL_WIDTH / 2,
+                    panelX + textWidth / 2 + 3, panelX + PANEL_WIDTH - textWidth / 2 - 3);
+            int textY = panelY - 10;
+            guiGraphics.fill(centerX - textWidth / 2 - 2, textY - 1,
+                    centerX + (textWidth + 1) / 2 + 2, textY + 9, COLOR_GROOVE);
+            drawCenteredText(guiGraphics, font, text, centerX, textY,
+                    data.currentCharges() > 0 ? theme.resource() : COLOR_TEXT_DIM);
+            renderPendingDots(guiGraphics, panelX + NORMAL_X + NORMAL_WIDTH / 2,
+                    panelY + NORMAL_Y + 12 + pressOffset, theme.resource());
+            return;
+        }
+
+        int firstRow = Math.min(4, max);
+        int secondRow = Math.max(0, max - firstRow);
+        int firstY = panelY + NORMAL_Y + (secondRow > 0 ? 7 : 10) + pressOffset;
+        renderAmmoRow(guiGraphics, panelX + NORMAL_X + NORMAL_WIDTH / 2,
+                firstY, 0, firstRow, data.currentCharges(), theme);
+        if (secondRow > 0) {
+            renderAmmoRow(guiGraphics, panelX + NORMAL_X + NORMAL_WIDTH / 2,
+                    firstY + 6, firstRow, secondRow, data.currentCharges(), theme);
+        }
+
+        if (data.currentCharges() < max && data.cdFraction() > 0f) {
+            int barX = panelX + NORMAL_X + 2;
+            int barY = panelY + NORMAL_Y + 21;
+            int barWidth = NORMAL_WIDTH - 4;
+            guiGraphics.fill(barX, barY, barX + barWidth, barY + 2, COLOR_GROOVE);
+            int progress = Math.clamp(
+                    (int) Math.floor(barWidth * (1f - data.cdFraction())), 0, barWidth);
+            if (progress > 0) {
+                guiGraphics.fill(barX, barY, barX + progress, barY + 2,
+                        ARGB.multiplyAlpha(theme.resource(), 0.86f));
+            }
+        }
+    }
+
+    private void renderAmmoRow(GuiGraphicsExtractor guiGraphics, int centerX, int y,
+            int startIndex, int count, int currentCharges, Theme theme) {
+        int pipSize = 3;
+        int gap = 2;
+        int width = count * pipSize + Math.max(0, count - 1) * gap;
+        int x = centerX - width / 2;
+        for (int i = 0; i < count; i++) {
+            int index = startIndex + i;
+            guiGraphics.fill(x, y, x + pipSize, y + pipSize, COLOR_GROOVE);
+            if (index < currentCharges) {
+                guiGraphics.fill(x + 1, y, x + pipSize, y + pipSize - 1, theme.resource());
+                guiGraphics.fill(x + 1, y, x + pipSize - 1, y + 1, theme.hot());
+            } else {
+                guiGraphics.fill(x + 1, y + 1, x + pipSize, y + pipSize, COLOR_EMPTY);
+            }
+            x += pipSize + gap;
+        }
+    }
+
+    private void renderEnergyChamber(GuiGraphicsExtractor guiGraphics, Font font,
+            int panelX, int panelY, SkillDisplayData data, SlotAnim anim,
+            Theme theme, boolean active, float time, int pressOffset) {
+        float progress = Math.clamp(1f - data.cdFraction(), 0f, 1f);
+        int x = panelX + NORMAL_X + 2;
+        int y = panelY + NORMAL_Y + 8 + pressOffset;
+        renderNarrowSegments(guiGraphics, x, y, 7, progress, theme.resource());
+        if (active || progress < 0.2f || time < anim.resourceTextUntil) {
+            drawCenteredText(guiGraphics, font, Math.round(progress * 100f) + "%",
+                    panelX + NORMAL_X + NORMAL_WIDTH / 2, panelY - 10,
+                    progress > 0f ? theme.resource() : COLOR_TEXT_DIM);
+        }
+    }
+
+    private void renderSkillOneMeter(GuiGraphicsExtractor guiGraphics, Font font,
+            int panelX, int panelY, AbstractGauntletItem gauntlet, SkillDisplayData data,
+            SlotAnim anim, boolean charging, float charge, boolean active, Theme theme, float time) {
+        int x = panelX + SKILL_ONE_X + 1;
+        int y = panelY + 1;
+        if (charging && gauntlet.isChargeProgressMeaningful()) {
+            renderCompactSegments(guiGraphics, x, y, 25, 2, charge, theme.hot());
+            return;
+        }
+
+        boolean barrier = gauntlet instanceof TheAxiomGauntletItem;
+        if (data.mode() == SkillStateType.CONDITIONAL) {
+            float progress = Math.clamp(1f - data.cdFraction(), 0f, 1f);
+            renderCompactSegments(guiGraphics, x, y, 25, 2, progress, theme.accent());
+            if (active || progress < 0.2f || time < anim.resourceTextUntil) {
+                drawCenteredText(guiGraphics, font, Math.round(progress * 100f) + "%",
+                        panelX + SKILL_ONE_X + SLOT_SIZE / 2, panelY - 10,
+                        progress > 0f ? theme.accent() : COLOR_TEXT_DIM);
+            }
+        } else if (barrier && data.mode() == SkillStateType.COOLDOWN) {
+            renderCompactSegments(guiGraphics, x, y, 25, 2, 0f, theme.accent());
+        }
+    }
+
+    private void renderSkillSlot(GuiGraphicsExtractor guiGraphics, Font font,
+            int panelX, int panelY, SkillType type, SkillDisplayData data,
+            SlotAnim anim, Theme theme, boolean charging, boolean active, float time) {
+        int size = slotSize(type);
+        int x = panelX + slotOffsetX(type);
+        int y = panelY + slotOffsetY(type);
+        boolean ready = data.usable();
+        int stateColor = stateColor(theme, type);
+        renderStateFrame(guiGraphics, x, y, size, size, ready, active, charging,
+                type == SkillType.ULTIMATE, stateColor, anim, time);
+
+        int pressOffset = pressOffset(anim, time);
+        int iconX = x + (size - ICON_SIZE) / 2;
+        int iconY = y + (type == SkillType.ULTIMATE ? 7 : 4) + pressOffset;
+        int iconTint = ready || active || charging ? 0xFFFFFFFF : COLOR_ICON_DIM;
+        renderSprite(guiGraphics, theme.icon(type), iconX, iconY, ICON_SIZE, ICON_SIZE, iconTint);
+
+        int wellInset = type == SkillType.ULTIMATE ? 4 : 3;
+        int wellHeight = type == SkillType.ULTIMATE ? 24 : 20;
+        switch (data.mode()) {
+            case COOLDOWN -> renderCooldown(guiGraphics, font,
+                    x + wellInset, y + wellInset, size - wellInset * 2, wellHeight, data, theme);
+            case INCREMENTAL_CHARGE, FULL_CHARGE -> renderInlineCharges(
+                    guiGraphics, font, x, y, size, data, theme);
+            case CONDITIONAL, RESOURCE_COOLDOWN -> {}
+        }
+
+        int badgeY = panelY + (type == SkillType.ULTIMATE ? ULTIMATE_BADGE_Y : REGULAR_BADGE_Y);
+        renderKeyBadge(guiGraphics, font, x + size / 2, badgeY + pressOffset, size - 2,
+                skillLabel(type), ready, active || charging, type == SkillType.ULTIMATE, stateColor);
+    }
+
+    private void renderStateFrame(GuiGraphicsExtractor guiGraphics, int x, int y,
+            int width, int height, boolean ready, boolean active, boolean charging,
+            boolean emphasizeReady, int stateColor, SlotAnim anim, float time) {
+        if (active || charging) {
+            float pulse = 0.55f + 0.12f * (float) Math.sin(time * 0.35f);
+            outline(guiGraphics, x, y, width, height, ARGB.multiplyAlpha(stateColor, pulse));
+        } else if (ready && emphasizeReady) {
+            outline(guiGraphics, x, y, width, height, ARGB.multiplyAlpha(stateColor, 0.72f));
+            drawCorners(guiGraphics, x - 1, y - 1, width + 2, height + 2,
+                    ARGB.multiplyAlpha(stateColor, 0.62f), 4);
+        }
+
+        float elapsed = time - anim.readyFlashStart;
+        if (elapsed >= 0f && elapsed < READY_FLASH_TICKS) {
+            float alpha = 1f - elapsed / READY_FLASH_TICKS;
+            int color = ARGB.multiplyAlpha(stateColor, alpha);
+            drawCorners(guiGraphics, x - 1, y - 1, width + 2, height + 2, color, 5);
+            int travel = Math.max(1, width - 5);
+            int sweepX = x + 1 + Math.min(travel, (int) (travel * elapsed / READY_FLASH_TICKS));
+            guiGraphics.fill(sweepX, y - 1, Math.min(x + width, sweepX + 3), y, color);
+        }
+    }
+
+    private void renderCooldown(GuiGraphicsExtractor guiGraphics, Font font,
+            int x, int y, int width, int height, SkillDisplayData data, Theme theme) {
+        if (data.usable()) return;
+        int veilHeight = Math.clamp((int) Math.ceil(height * data.cdFraction()), 0, height);
+        if (veilHeight > 0) {
+            guiGraphics.fill(x, y, x + width, y + veilHeight, COLOR_COOLDOWN);
+        }
+
+        int barY = y + height - 2;
+        guiGraphics.fill(x, barY, x + width, barY + 2, COLOR_GROOVE);
+        int fillWidth = Math.clamp((int) Math.floor(width * (1f - data.cdFraction())), 0, width);
+        if (fillWidth > 0) {
+            guiGraphics.fill(x, barY, x + fillWidth, barY + 2,
+                    ARGB.multiplyAlpha(theme.accent(), 0.82f));
+        }
+
+        if (data.remainingTicks() > 0) {
+            drawCenteredText(guiGraphics, font, cooldownText(data.remainingTicks()),
+                    x + width / 2, y + Math.max(1, (height - 9) / 2), COLOR_TEXT);
+        }
+    }
+
+    private void renderInlineCharges(GuiGraphicsExtractor guiGraphics, Font font,
+            int x, int y, int size, SkillDisplayData data, Theme theme) {
+        int max = data.maxCharges();
+        if (max <= 0) return;
+        if (max > 8) {
+            drawCenteredText(guiGraphics, font, data.currentCharges() + "/" + max,
+                    x + size / 2, y + size - 17,
+                    data.currentCharges() > 0 ? theme.resource() : COLOR_TEXT_DIM);
+            return;
+        }
+        int rowWidth = max * 2 + Math.max(0, max - 1);
+        int pipX = x + (size - rowWidth) / 2;
+        int pipY = y + size - 12;
+        for (int i = 0; i < max; i++) {
+            guiGraphics.fill(pipX, pipY, pipX + 2, pipY + 2,
+                    i < data.currentCharges() ? theme.resource() : COLOR_EMPTY);
+            pipX += 3;
+        }
+    }
+
+    private void renderUltimateRail(GuiGraphicsExtractor guiGraphics,
+            int panelX, int panelY, SkillDisplayData data, Theme theme, boolean active, float time) {
+        float progress = data.mode() == SkillStateType.CONDITIONAL
+                ? Math.clamp(1f - data.cdFraction(), 0f, 1f)
+                : data.usable() ? 1f : 0f;
+        int x = panelX + ULTIMATE_RAIL_X;
+        int y = panelY + ULTIMATE_RAIL_Y;
+        float pulse = active ? 0.82f + 0.12f * (float) Math.sin(time * 0.35f) : 1f;
+        for (int i = 0; i < SEGMENTS; i++) {
+            int segmentX = x + i * ULTIMATE_RAIL_WIDTH / SEGMENTS;
+            int nextX = x + (i + 1) * ULTIMATE_RAIL_WIDTH / SEGMENTS;
+            int segmentWidth = Math.max(1, nextX - segmentX - 1);
+            guiGraphics.fill(segmentX, y, segmentX + segmentWidth,
+                    y + ULTIMATE_RAIL_HEIGHT, COLOR_EMPTY);
+            float local = Math.clamp(progress * SEGMENTS - i, 0f, 1f);
+            int filled = Math.clamp((int) Math.ceil(segmentWidth * local), 0, segmentWidth);
+            if (filled <= 0) continue;
+            float alpha = pulse * (0.55f + 0.45f * local);
+            if (theme == FINAL_ANSWER_THEME) {
+                guiGraphics.fill(segmentX, y, segmentX + filled, y + 2,
+                        ARGB.multiplyAlpha(theme.hot(), alpha));
+                guiGraphics.fill(segmentX, y + 2, segmentX + filled, y + ULTIMATE_RAIL_HEIGHT,
+                        ARGB.multiplyAlpha(theme.accent(), alpha));
+            } else {
+                int color = data.usable() ? theme.hot() : theme.accent();
+                guiGraphics.fill(segmentX, y, segmentX + filled, y + ULTIMATE_RAIL_HEIGHT,
+                        ARGB.multiplyAlpha(color, alpha));
+                if (data.usable()) {
+                    guiGraphics.fill(segmentX, y, segmentX + filled, y + 1,
+                            ARGB.multiplyAlpha(theme.hot(), Math.min(1f, alpha + 0.18f)));
                 }
             }
         }
-
-        renderKeyLabel(guiGraphics, font, x, y, size, skillLabel(type));
     }
 
-    private void renderSlotFrame(GuiGraphicsExtractor guiGraphics, int x, int y, int size, int borderColor) {
-        guiGraphics.fill(x, y, x + size, y + size, borderColor);
-        guiGraphics.fill(x + 1, y + 1, x + size - 1, y + size - 1, COLOR_SLOT_BG);
-        guiGraphics.fill(x + 1, y + 1, x + size - 1, y + 2, COLOR_TOP_HIGHLIGHT);
-        guiGraphics.fill(x + 1, y + size - 2, x + size - 1, y + size - 1, COLOR_BOTTOM_SHADE);
-    }
-
-    private void renderReadyUnderglow(GuiGraphicsExtractor guiGraphics, int x, int y, int size, Theme theme) {
-        // fillGradient's first color is the top edge, second the bottom: the glow fades upward.
-        guiGraphics.fillGradient(x + 1, y + size - 9, x + size - 1, y + size - 1,
-                theme.accent() & 0x00FFFFFF, ARGB.multiplyAlpha(theme.accent(), 0.10f));
-    }
-
-    private int borderColor(Theme theme, SkillType type, boolean ready, boolean active, boolean charging,
-            SlotAnim anim, float time) {
-        if (active || charging) {
-            return ARGB.multiplyAlpha(theme.accent(), 0.55f + 0.45f * (float) Math.sin(time * 0.35f));
-        }
-        if (ready) {
-            float flashElapsed = time - anim.readyFlashStart;
-            if (flashElapsed >= 0f && flashElapsed < READY_FLASH_TICKS) {
-                int flashColor = type == SkillType.ULTIMATE ? theme.hot() : theme.accent();
-                if (flashElapsed < READY_FLASH_FULL_TICKS) return flashColor;
-                float t = (flashElapsed - READY_FLASH_FULL_TICKS) / READY_FLASH_FULL_TICKS;
-                return ARGB.multiplyAlpha(flashColor, 0.9f - 0.15f * t);
+    private void renderNarrowSegments(GuiGraphicsExtractor guiGraphics,
+            int x, int y, int height, float progress, int color) {
+        progress = Math.clamp(progress, 0f, 1f);
+        for (int i = 0; i < SEGMENTS; i++) {
+            int segmentX = x + i * 2;
+            guiGraphics.fill(segmentX, y, segmentX + 1, y + height, COLOR_EMPTY);
+            float local = Math.clamp(progress * SEGMENTS - i, 0f, 1f);
+            int filledHeight = Math.clamp((int) Math.ceil(height * local), 0, height);
+            if (filledHeight > 0) {
+                guiGraphics.fill(segmentX, y + height - filledHeight,
+                        segmentX + 1, y + height, ARGB.multiplyAlpha(color, 0.62f + 0.38f * local));
             }
-            return ARGB.multiplyAlpha(theme.accent(), 0.75f);
-        }
-        return theme.borderDim();
-    }
-
-    private void renderIcon(GuiGraphicsExtractor guiGraphics, Identifier gauntletId, SkillType type,
-            int x, int y, int size, int main, int accent, int shade, int outline, float popScale) {
-        GauntletHudIcons.GauntletSkillIcon icon = GauntletHudIcons.forGauntlet(gauntletId, type);
-        int iconX = x + (size - GauntletHudIcons.ICON_SIZE) / 2;
-        int iconY = y + (size - GauntletHudIcons.ICON_SIZE) / 2;
-        if (popScale == 1f) {
-            GauntletHudIcons.draw(guiGraphics, icon, iconX, iconY, main, accent, shade, outline);
-            return;
-        }
-        Matrix3x2fStack pose = guiGraphics.pose();
-        pose.pushMatrix();
-        pose.translate(x + size / 2f, y + size / 2f);
-        pose.scale(popScale, popScale);
-        pose.translate(-(x + size / 2f), -(y + size / 2f));
-        GauntletHudIcons.draw(guiGraphics, icon, iconX, iconY, main, accent, shade, outline);
-        pose.popMatrix();
-    }
-
-    private void renderCooldown(GuiGraphicsExtractor guiGraphics, Font font, int x, int y, int size,
-            SkillDisplayData data, float centerX, float centerY) {
-        if (data.usable()) return;
-        renderRadialSweep(guiGraphics, centerX, centerY, sweepRadius(size), data.cdFraction(), COLOR_COOLDOWN);
-        if (data.remainingTicks() > 20) {
-            String text = cooldownText(data.remainingTicks());
-            guiGraphics.centeredText(font, text, x + size / 2 + 1, y + size / 2 - 4 + 1, COLOR_TEXT_SHADOW);
-            guiGraphics.centeredText(font, text, x + size / 2, y + size / 2 - 4, COLOR_TEXT);
         }
     }
 
-    private void renderAmmoPips(GuiGraphicsExtractor guiGraphics, int x, int y, int size,
-            SkillDisplayData data, Theme theme) {
-        int max = data.maxCharges();
-        if (max <= 0) return;
-        int rowWidth = max * PIP_SIZE + (max - 1) * PIP_GAP;
-        int pipX = x + (size - rowWidth) / 2;
-        int pipY = y + size - 6;
-        for (int i = 0; i < max; i++) {
-            int color = i < data.currentCharges() ? theme.resource() : COLOR_EMPTY_PIP;
-            guiGraphics.fill(pipX, pipY, pipX + PIP_SIZE, pipY + PIP_SIZE, color);
-            pipX += PIP_SIZE + PIP_GAP;
-        }
-        if (data.cdFraction() > 0f && data.currentCharges() < max) {
-            int barX = x + (size - rowWidth) / 2;
-            int barY = pipY + PIP_SIZE + 1;
-            int fillW = (int) (rowWidth * (1f - data.cdFraction()));
-            guiGraphics.fill(barX, barY, barX + rowWidth, barY + 1, COLOR_BAR_BG);
-            if (fillW > 0) guiGraphics.fill(barX, barY, barX + fillW, barY + 1, theme.resource());
+    private void renderCompactSegments(GuiGraphicsExtractor guiGraphics,
+            int x, int y, int width, int height, float progress, int color) {
+        progress = Math.clamp(progress, 0f, 1f);
+        for (int i = 0; i < SEGMENTS; i++) {
+            int segmentX = x + i * width / SEGMENTS;
+            int nextX = x + (i + 1) * width / SEGMENTS;
+            int segmentWidth = Math.max(1, nextX - segmentX - 1);
+            guiGraphics.fill(segmentX, y, segmentX + segmentWidth, y + height, COLOR_EMPTY);
+            float local = Math.clamp(progress * SEGMENTS - i, 0f, 1f);
+            int filled = Math.clamp((int) Math.ceil(segmentWidth * local), 0, segmentWidth);
+            if (filled > 0) {
+                guiGraphics.fill(segmentX, y, segmentX + filled, y + height,
+                        ARGB.multiplyAlpha(color, 0.58f + 0.42f * local));
+            }
         }
     }
 
-    private void renderSyncPending(GuiGraphicsExtractor guiGraphics, Font font, int startX, int startY, Theme theme) {
-        int x = startX;
-        for (SkillType type : SkillType.values()) {
+    private void renderKeyBadge(GuiGraphicsExtractor guiGraphics, Font font,
+            int centerX, int y, int maxWidth, String label, boolean ready,
+            boolean active, boolean emphasizeReady, int stateColor) {
+        int textWidth = font.width(label);
+        int width = Math.clamp(textWidth + 4, 10, maxWidth);
+        int x = centerX - width / 2;
+        guiGraphics.fill(x, y, x + width, y + KEY_BADGE_HEIGHT, 0xF0060709);
+        int border = active ? stateColor
+                : emphasizeReady && ready ? ARGB.multiplyAlpha(stateColor, 0.9f)
+                        : ready ? ARGB.multiplyAlpha(stateColor, 0.38f) : 0xFF30343A;
+        outline(guiGraphics, x, y, width, KEY_BADGE_HEIGHT, border);
+        guiGraphics.text(font, label, centerX - textWidth / 2, y - 1,
+                ready || active ? COLOR_TEXT : COLOR_TEXT_DIM, true);
+    }
+
+    private void renderSyncPending(GuiGraphicsExtractor guiGraphics, Font font,
+            int panelX, int panelY, Theme theme) {
+        renderPendingDots(guiGraphics, panelX + NORMAL_X + NORMAL_WIDTH / 2,
+                panelY + NORMAL_Y + 12, COLOR_TEXT_DIM);
+        renderKeyBadge(guiGraphics, font, panelX + NORMAL_X + NORMAL_WIDTH / 2,
+                panelY + REGULAR_BADGE_Y, NORMAL_WIDTH - 2,
+                skillLabel(SkillType.NORMAL_ATTACK), false, false, false, theme.frame());
+
+        for (SkillType type : DISPLAY_SKILLS) {
             int size = slotSize(type);
-            int y = startY + (ULTIMATE_SLOT - size);
-            renderSlotFrame(guiGraphics, x, y, size, theme.border());
-            guiGraphics.centeredText(font, "?", x + size / 2, y + size / 2 - 4, theme.iconDim());
-            renderKeyLabel(guiGraphics, font, x, y, size, skillLabel(type));
-            x += size + gapAfter(type);
+            int x = panelX + slotOffsetX(type);
+            int y = panelY + slotOffsetY(type);
+            renderPendingDots(guiGraphics, x + size / 2, y + size / 2 - 2, COLOR_TEXT_DIM);
+            renderKeyBadge(guiGraphics, font, x + size / 2,
+                    panelY + (type == SkillType.ULTIMATE ? ULTIMATE_BADGE_Y : REGULAR_BADGE_Y),
+                    size - 2, skillLabel(type), false, false, false, theme.frame());
         }
+
+        renderUltimateRail(guiGraphics, panelX, panelY,
+                new SkillDisplayData(SkillStateType.CONDITIONAL, 1f, 0, 0, false),
+                theme, false, 0f);
     }
 
-    private void renderKeyLabel(GuiGraphicsExtractor guiGraphics, Font font, int x, int y, int size, String label) {
-        guiGraphics.text(font, label, x + (size - font.width(label)) / 2, y + size + KEY_LABEL_GAP,
-                COLOR_KEY_LABEL, false);
+    private void renderPendingDots(GuiGraphicsExtractor guiGraphics, int centerX, int centerY, int color) {
+        guiGraphics.fill(centerX - 4, centerY, centerX - 2, centerY + 2, color);
+        guiGraphics.fill(centerX - 1, centerY, centerX + 1, centerY + 2, color);
+        guiGraphics.fill(centerX + 2, centerY, centerX + 4, centerY + 2, color);
     }
 
-    /**
-     * Dark radial wipe used for cooldowns: {@code ceil(fraction * SWEEP_SPOKES)} 2px-wide spokes
-     * fanning out from the slot center, starting at the top and going clockwise. Each spoke is a
-     * rect drawn in rotated pose space, which the GUI renderer supports (vertices are transformed
-     * by the pose matrix, so no per-spoke quad math is needed).
-     */
-    private void renderRadialSweep(GuiGraphicsExtractor guiGraphics, float centerX, float centerY,
-            int radius, float fraction, int color) {
-        int spokes = (int) Math.ceil(fraction * SWEEP_SPOKES);
-        Matrix3x2fStack pose = guiGraphics.pose();
-        for (int i = 0; i < spokes; i++) {
-            pose.pushMatrix();
-            pose.translate(centerX, centerY);
-            pose.rotate((float) Math.toRadians(i * (360.0 / SWEEP_SPOKES)));
-            guiGraphics.fill(-1, -radius, 1, 0, color);
-            pose.popMatrix();
-        }
-    }
-
-    /**
-     * Progress ring hugging the outside of a slot frame, built from the same spoke technique.
-     * Counterclockwise rings grow from the top towards the left (conditional charge-up);
-     * clockwise rings grow towards the right (skill-one channel charge).
-     */
-    private void renderProgressRing(GuiGraphicsExtractor guiGraphics, float centerX, float centerY,
-            int radius, float fraction, int color, boolean counterclockwise) {
-        int spokes = (int) Math.ceil(Math.clamp(fraction, 0f, 1f) * SWEEP_SPOKES);
-        Matrix3x2fStack pose = guiGraphics.pose();
-        for (int i = 0; i < spokes; i++) {
-            float angle = (float) Math.toRadians(i * (360.0 / SWEEP_SPOKES));
-            pose.pushMatrix();
-            pose.translate(centerX, centerY);
-            pose.rotate(counterclockwise ? -angle : angle);
-            guiGraphics.fill(-1, -radius, 1, -(radius - 2), color);
-            pose.popMatrix();
-        }
-    }
-
-    /**
-     * Watches a slot's synced state for the two transition-driven animations: the release pop
-     * (cooldown slot flips to unusable, or a charge pool loses a charge) and the ready flash
-     * (slot becomes usable again). First observation records state only, so neither animation
-     * fires on login, first sync or gauntlet switch (the anim map is cleared in those cases).
-     */
     private SlotAnim updateSlotAnim(SkillType type, SkillDisplayData data, float time) {
-        SlotAnim anim = slotAnims.computeIfAbsent(type, t -> new SlotAnim());
+        SlotAnim anim = slotAnims.computeIfAbsent(type, ignored -> new SlotAnim());
+        float progress = data.mode() == SkillStateType.CONDITIONAL
+                ? Math.clamp(1f - data.cdFraction(), 0f, 1f)
+                : 0f;
         if (anim.initialized) {
             boolean released = switch (data.mode()) {
                 case COOLDOWN -> anim.lastUsable && !data.usable();
                 case INCREMENTAL_CHARGE, FULL_CHARGE -> data.currentCharges() < anim.lastCharges;
-                case CONDITIONAL, RESOURCE_COOLDOWN -> false;
+                case CONDITIONAL -> type == SkillType.ULTIMATE && anim.lastProgress - progress > 0.25f;
+                case RESOURCE_COOLDOWN -> false;
             };
-            if (released) anim.popStart = time;
+            if (released) anim.pressStart = time;
             if (!anim.lastUsable && data.usable()) anim.readyFlashStart = time;
+            if (data.mode() == SkillStateType.CONDITIONAL
+                    && Math.abs(anim.lastProgress - progress) > 0.001f) {
+                anim.resourceTextUntil = time + RESOURCE_TEXT_TICKS;
+            }
         }
         anim.initialized = true;
         anim.lastUsable = data.usable();
         anim.lastCharges = data.currentCharges();
+        anim.lastProgress = progress;
         return anim;
     }
 
-    /** Ease-out-square pop scale: 1.18 back to 1.0 over {@link #POP_TICKS} ticks after firing. */
-    private float popScale(SlotAnim anim, float time) {
-        float elapsed = time - anim.popStart;
-        if (elapsed < 0f || elapsed >= POP_TICKS) return 1f;
-        float t = elapsed / POP_TICKS;
-        return 1f + 0.18f * (1f - t) * (1f - t);
+    private int pressOffset(SlotAnim anim, float time) {
+        float elapsed = time - anim.pressStart;
+        return elapsed >= 0f && elapsed < PRESS_TICKS / 2f ? 1 : 0;
     }
 
     private boolean isSkillActive(AbstractGauntletItem gauntlet, SkillType type, SkillDisplayData data) {
         Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return false;
+        int playerId = mc.player.getId();
         boolean prime = gauntlet instanceof LegacyPrimeGauntletItem;
         boolean horus = gauntlet instanceof LegacyOfHorusGauntletItem;
         boolean finalAnswer = gauntlet instanceof FinalAnswerGauntletItem;
+        boolean axiom = gauntlet instanceof TheAxiomGauntletItem;
         return switch (type) {
             case NORMAL_ATTACK -> finalAnswer && data.usable() && mc.options.keyAttack.isDown();
-            case SKILL_ONE -> prime && ClientMovementManager.isActiveTask(ClientRocketPunchTask.class)
-                    || horus && ClientMovementManager.isActiveTask(ClientEntityPushTask.class)
-                    || finalAnswer && mc.player.isUsingItem();
-            case SKILL_TWO -> prime && ClientMovementManager.isActiveTask(ClientEntityPushTask.class)
-                    || finalAnswer && ClientGauntletEffects.isFading(mc.player.getId());
+            case SKILL_ONE -> (prime && ClientMovementManager.isActiveTask(ClientRocketPunchTask.class))
+                    || (horus && ClientMovementManager.isActiveTask(ClientEntityPushTask.class))
+                    || ((finalAnswer || axiom) && mc.player.isUsingItem()
+                            && mc.player.getUseItem().getItem() == gauntlet);
+            case SKILL_TWO -> (prime && ClientMovementManager.isActiveTask(ClientEntityPushTask.class))
+                    || (finalAnswer && ClientGauntletEffects.isFading(playerId))
+                    || (axiom && ClientGauntletEffects.isKineticGraspActive(playerId));
             case SKILL_THREE -> prime && ClientMovementManager.isActiveTask(ClientSeismicSlamTask.class);
-            case ULTIMATE -> prime && (ClientMovementManager.isActiveTask(ClientMeteorHoverTask.class)
-                    || ClientMovementManager.isActiveTask(ClientMeteorFallTask.class))
-                    || horus && mcPlayerHasNanoSurge()
-                    || finalAnswer && ClientGauntletEffects.isCoalescenceBeamActive(mc.player.getId());
+            case ULTIMATE -> (prime && (ClientMovementManager.isActiveTask(ClientMeteorHoverTask.class)
+                    || ClientMovementManager.isActiveTask(ClientMeteorFallTask.class)))
+                    || (horus && ClientGauntletEffects.isNanoSurgeActive(playerId))
+                    || (finalAnswer && ClientGauntletEffects.isCoalescenceBeamActive(playerId))
+                    || (axiom && ClientGauntletEffects.isGraviticFluxActive(playerId));
         };
     }
 
-    private boolean mcPlayerHasNanoSurge() {
-        var player = Minecraft.getInstance().player;
-        return player != null && ClientGauntletEffects.isNanoSurgeActive(player.getId());
-    }
-
     private String skillLabel(SkillType type) {
+        Minecraft mc = Minecraft.getInstance();
         return switch (type) {
-            case NORMAL_ATTACK -> "LMB";
-            case SKILL_ONE -> "RMB";
+            case NORMAL_ATTACK -> compactKeyLabel(mc.options.keyAttack, "LMB");
+            case SKILL_ONE -> compactKeyLabel(mc.options.keyUse, "RMB");
             case SKILL_TWO -> compactKeyLabel(ClientInputHandler.SKILL_TWO_KEY, "Sft");
             case SKILL_THREE -> compactKeyLabel(ClientInputHandler.SKILL_THREE_KEY, "V");
             case ULTIMATE -> compactKeyLabel(ClientInputHandler.ULTIMATE_KEY, "X");
@@ -369,43 +564,84 @@ public class GauntletHudRenderer implements GuiLayer {
         String raw = mapping.getTranslatedKeyMessage().getString();
         if (raw == null || raw.isBlank()) return fallback;
         String lower = raw.toLowerCase(Locale.ROOT);
-        if (lower.contains("shift")) return "Sft";
-        if (lower.contains("ctrl") || lower.contains("control")) return "Ctrl";
-        if (lower.contains("alt")) return "Alt";
-        if (lower.contains("space")) return "Spc";
-        if (lower.contains("mouse")) {
-            if (lower.contains("left")) return "LMB";
-            if (lower.contains("right")) return "RMB";
-            if (lower.contains("middle")) return "MMB";
+        String saved = mapping.saveString().toLowerCase(Locale.ROOT);
+        if (lower.contains("shift") || saved.contains("shift")) return "Sft";
+        if (lower.contains("ctrl") || lower.contains("control") || saved.contains("control")) return "Ctrl";
+        if (lower.contains("alt") || saved.contains("alt")) return "Alt";
+        if (lower.contains("space") || saved.endsWith(".space")) return "Spc";
+        if (lower.contains("mouse") || saved.startsWith("key.mouse.")) {
+            if (lower.contains("left") || saved.endsWith(".left")) return "LMB";
+            if (lower.contains("right") || saved.endsWith(".right")) return "RMB";
+            if (lower.contains("middle") || saved.endsWith(".middle")) return "MMB";
+            String button = saved.substring(saved.lastIndexOf('.') + 1);
+            return button.chars().allMatch(Character::isDigit) ? "M" + button : "M?";
         }
-        if (raw.length() <= 4) return raw;
-        return raw.substring(0, 4);
+        return raw.length() <= 4 ? raw : raw.substring(0, 4);
     }
 
     private String cooldownText(int ticks) {
         double seconds = ticks / 20.0;
-        if (seconds >= 10.0) return Integer.toString((int) Math.ceil(seconds));
-        return String.format(java.util.Locale.ROOT, "%.1f", seconds);
+        if (seconds > 3.0) return Integer.toString((int) Math.ceil(seconds));
+        return String.format(Locale.ROOT, "%.1f", seconds);
     }
 
-    private int slotSize(SkillType type) {
-        return type == SkillType.ULTIMATE ? ULTIMATE_SLOT : NORMAL_SLOT;
-    }
-
-    private int gapAfter(SkillType type) {
+    private int slotOffsetX(SkillType type) {
         return switch (type) {
-            case NORMAL_ATTACK -> LMB_GAP;
-            case ULTIMATE -> 0;
-            default -> SLOT_GAP;
+            case NORMAL_ATTACK -> NORMAL_X;
+            case SKILL_ONE -> SKILL_ONE_X;
+            case SKILL_TWO -> SKILL_TWO_X;
+            case SKILL_THREE -> SKILL_THREE_X;
+            case ULTIMATE -> ULTIMATE_X;
         };
     }
 
-    private int sweepRadius(int size) {
-        return (size - 2) / 2 + 1;
+    private int slotOffsetY(SkillType type) {
+        return type == SkillType.ULTIMATE ? ULTIMATE_Y : SKILL_Y;
     }
 
-    private int ringRadius(int size) {
-        return size / 2 + 3;
+    private int slotSize(SkillType type) {
+        return type == SkillType.ULTIMATE ? ULTIMATE_SIZE : SLOT_SIZE;
+    }
+
+    private int stateColor(Theme theme, SkillType type) {
+        if (theme == FINAL_ANSWER_THEME && type == SkillType.NORMAL_ATTACK) return theme.resource();
+        return type == SkillType.ULTIMATE ? theme.hot() : theme.accent();
+    }
+
+    private void renderSprite(GuiGraphicsExtractor guiGraphics, Identifier sprite,
+            int x, int y, int width, int height, int color) {
+        guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, width, height, color);
+    }
+
+    private void drawCenteredText(GuiGraphicsExtractor guiGraphics, Font font,
+            String text, int centerX, int y, int color) {
+        guiGraphics.centeredText(font, text, centerX + 1, y + 1, COLOR_TEXT_SHADOW);
+        guiGraphics.centeredText(font, text, centerX, y, color);
+    }
+
+    private void drawCorners(GuiGraphicsExtractor guiGraphics, int x, int y,
+            int width, int height, int color, int length) {
+        guiGraphics.fill(x, y, x + length, y + 1, color);
+        guiGraphics.fill(x, y, x + 1, y + length, color);
+        guiGraphics.fill(x + width - length, y, x + width, y + 1, color);
+        guiGraphics.fill(x + width - 1, y, x + width, y + length, color);
+        guiGraphics.fill(x, y + height - 1, x + length, y + height, color);
+        guiGraphics.fill(x, y + height - length, x + 1, y + height, color);
+        guiGraphics.fill(x + width - length, y + height - 1, x + width, y + height, color);
+        guiGraphics.fill(x + width - 1, y + height - length, x + width, y + height, color);
+    }
+
+    private void outline(GuiGraphicsExtractor guiGraphics, int x, int y,
+            int width, int height, int color) {
+        guiGraphics.fill(x, y, x + width, y + 1, color);
+        guiGraphics.fill(x, y + height - 1, x + width, y + height, color);
+        guiGraphics.fill(x, y, x + 1, y + height, color);
+        guiGraphics.fill(x + width - 1, y, x + width, y + height, color);
+    }
+
+    private void clearAnimationState() {
+        lastGauntletId = null;
+        slotAnims.clear();
     }
 
     private Theme themeFor(Identifier gauntletId) {
@@ -413,22 +649,49 @@ public class GauntletHudRenderer implements GuiLayer {
             case "legacy_prime" -> PRIME_THEME;
             case "legacy_of_horus" -> HORUS_THEME;
             case "final_answer" -> FINAL_ANSWER_THEME;
+            case "the_axiom" -> AXIOM_THEME;
             default -> NEUTRAL_THEME;
         };
     }
 
-    private static Theme theme(int border, int accent, int hot, int resource) {
-        return new Theme(border, 0xFF3A3A3A, 0xFFEFEFEF, ARGB.scaleRGB(0xFFEFEFEF, DIM_FACTOR),
-                accent, hot, resource);
+    private static Theme theme(String key, int frame, int accent, int hot, int resource) {
+        EnumMap<SkillType, Identifier> icons = new EnumMap<>(SkillType.class);
+        icons.put(SkillType.SKILL_ONE, hudSprite("gauntlet/" + key + "/skill_one"));
+        icons.put(SkillType.SKILL_TWO, hudSprite("gauntlet/" + key + "/skill_two"));
+        icons.put(SkillType.SKILL_THREE, hudSprite("gauntlet/" + key + "/skill_three"));
+        icons.put(SkillType.ULTIMATE, hudSprite("gauntlet/" + key + "/ultimate"));
+        return new Theme(
+                frame,
+                accent,
+                hot,
+                resource,
+                hudSprite("gauntlet/" + key + "/chassis"),
+                Map.copyOf(icons));
+    }
+
+    private static Identifier hudSprite(String path) {
+        return Identifier.fromNamespaceAndPath("olru", "hud/" + path);
     }
 
     private static final class SlotAnim {
         boolean initialized;
         boolean lastUsable = true;
         int lastCharges;
-        float popStart = -1000f;
+        float lastProgress;
+        float pressStart = -1000f;
         float readyFlashStart = -1000f;
+        float resourceTextUntil = -1000f;
     }
 
-    private record Theme(int border, int borderDim, int icon, int iconDim, int accent, int hot, int resource) {}
+    private record Theme(
+            int frame,
+            int accent,
+            int hot,
+            int resource,
+            Identifier chassis,
+            Map<SkillType, Identifier> icons) {
+        Identifier icon(SkillType type) {
+            return icons.get(type);
+        }
+    }
 }

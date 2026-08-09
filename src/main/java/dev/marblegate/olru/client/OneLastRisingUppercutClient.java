@@ -60,15 +60,15 @@ public class OneLastRisingUppercutClient {
     }
 
     private void registerGuiLayers(RegisterGuiLayersEvent event) {
-        event.registerAboveAll(
-                Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "gauntlet_hud"),
-                new GauntletHudRenderer());
-        event.registerAboveAll(
-                Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "sedation_overlay"),
-                new SedationOverlayRenderer());
-        event.registerAboveAll(
-                Identifier.fromNamespaceAndPath(OneLastRisingUppercut.MODID, "fade_vignette"),
-                new FadeVignetteRenderer());
+        Identifier sedation = Identifier.fromNamespaceAndPath(
+                OneLastRisingUppercut.MODID, "sedation_overlay");
+        Identifier fade = Identifier.fromNamespaceAndPath(
+                OneLastRisingUppercut.MODID, "fade_vignette");
+        Identifier hud = Identifier.fromNamespaceAndPath(
+                OneLastRisingUppercut.MODID, "gauntlet_hud");
+        event.registerAboveAll(sedation, new SedationOverlayRenderer());
+        event.registerAbove(sedation, fade, new FadeVignetteRenderer());
+        event.registerAbove(fade, hud, new GauntletHudRenderer());
     }
 
     private void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {

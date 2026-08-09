@@ -349,6 +349,14 @@ public class ClientGauntletEffects {
         return COALESCENCE_BEAMS.containsKey(entityId);
     }
 
+    public static boolean isKineticGraspActive(int entityId) {
+        return KINETIC_GRASP_FIELDS.containsKey(entityId);
+    }
+
+    public static boolean isGraviticFluxActive(int entityId) {
+        return FLUX_FIELDS.containsKey(entityId) || GRAVITIC_ZONES.containsKey(entityId);
+    }
+
     public static NanoSurgeRenderData nanoSurgeRenderData(int entityId) {
         Timed effect = NANO_SURGE.get(entityId);
         if (effect == null) return null;
