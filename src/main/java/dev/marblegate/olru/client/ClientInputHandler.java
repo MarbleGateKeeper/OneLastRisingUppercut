@@ -14,11 +14,13 @@ import dev.marblegate.olru.network.payload.ServerboundMovementTaskActionPayload;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Input;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
@@ -77,6 +79,23 @@ public class ClientInputHandler {
         }
     }
 
+    @SubscribeEvent
+    public static void onMovementInputUpdate(MovementInputUpdateEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen != null
+                || !(event.getEntity().getMainHandItem().getItem() instanceof AbstractGauntletItem)
+                || !isGauntletSkillBoundToSneak(mc)) {
+            return;
+        }
+
+        releaseSneakKey(mc);
+
+        Input keyPresses = event.getInput().keyPresses;
+        if (keyPresses.shift()) {
+            event.getInput().keyPresses = new Input(keyPresses.forward(), keyPresses.backward(), keyPresses.left(), keyPresses.right(), keyPresses.jump(), false, keyPresses.sprint());
+        }
+    }
+
     public static void dispatchMovementRuntimeInput(Minecraft mc) {
         if (mc.player == null || mc.level == null || mc.screen != null) {
             wasJumpDownForMovement = false;
@@ -120,6 +139,33 @@ public class ClientInputHandler {
         consumeAnyClick(SKILL_TWO_KEY);
         consumeAnyClick(SKILL_THREE_KEY);
         consumeAnyClick(ULTIMATE_KEY);
+    }
+
+    private static boolean isGauntletSkillBoundToSneak(Minecraft mc) {
+        KeyMapping sneakKey = mc.options.keyShift;
+        return hasSameBinding(mc.options.keyAttack, sneakKey)
+                || hasSameBinding(mc.options.keyUse, sneakKey)
+                || hasSameBinding(SKILL_TWO_KEY, sneakKey)
+                || hasSameBinding(SKILL_THREE_KEY, sneakKey)
+                || hasSameBinding(ULTIMATE_KEY, sneakKey);
+    }
+
+    private static boolean hasSameBinding(KeyMapping skillKey, KeyMapping sneakKey) {
+        return !skillKey.isUnbound()
+                && skillKey.getKey().equals(sneakKey.getKey())
+                && skillKey.getKeyModifier() == sneakKey.getKeyModifier();
+    }
+
+    private static void releaseSneakKey(Minecraft mc) {
+        KeyMapping sneakKey = mc.options.keyShift;
+        if (mc.options.toggleCrouch().get()) {
+            if (sneakKey.isDown()) {
+                // ToggleKeyMapping ignores setDown(false) in toggle mode; another press flips it off.
+                sneakKey.setDown(true);
+            }
+        } else {
+            sneakKey.setDown(false);
+        }
     }
 
     private static boolean consumeAnyClick(KeyMapping mapping) {
